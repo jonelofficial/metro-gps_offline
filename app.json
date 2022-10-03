@@ -1,0 +1,55 @@
+{
+  "expo": {
+    "name": "Metro GPS",
+    "slug": "metroGPS",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./app/assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./app/assets/splash.png",
+      "backgroundColor": "#ffffff",
+      "resizeMode": "cover"
+    },
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./app/assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "config":{
+        "googleMaps":{
+          "apiKey": "AIzaSyDbCxrt0H-TQpGGDLlloTLfNKK5AAgtVVc"
+        }
+      },
+      "package": "com.jonelofficial.metroGPS"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f68e3908-3451-44d9-aa95-65d29ae7cdfb"
+      }
+    },
+    "androidStatusBar": {
+  
+    }
+  },
+  "extra": {},
+  "android":{
+    "config":{
+      "googleMaps":{
+        "apiKey": "AIzaSyDbCxrt0H-TQpGGDLlloTLfNKK5AAgtVVc"
+      }
+    }
+  }
+}
