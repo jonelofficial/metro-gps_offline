@@ -14,13 +14,13 @@ function SearchBar({
   setText,
   setData,
   setTrips,
-  populate,
-  user_id,
   token,
   fetchTrip,
   setNoData,
   loading,
   setLoading,
+  page,
+  setTripDate,
 }) {
   const [datePicker, setDatePicker] = useState(false);
   const [date, setDate] = useState(new Date());
@@ -34,13 +34,14 @@ function SearchBar({
 
     const trip_date = dayjs(value).format("YYYY-MM-DD");
     const displayDate = dayjs(value).format("MM-DD-YY");
-    const res = await findTrip(token, populate, user_id, trip_date);
+    const res = await findTrip(token, trip_date, page);
     if (res) {
       setTrips(res.data);
       setData(res.data.length);
 
       setDate(value);
       setText(displayDate);
+      setTripDate(trip_date);
       // setText(trip_date);
       return setLoading(false);
     }

@@ -39,20 +39,13 @@ function LoginScreen({ navigation }) {
     try {
       setLoading(true);
       const data = await useLogin(user);
-      if (data.user) {
-        logIn(data);
-        authStorage.storeToken(data);
-        reset();
-      } else if (data.error.name === "ValidationError") {
-        alert("Invalid username or password");
-      } else {
-        alert(data.error.message);
-      }
+      logIn(data);
+      authStorage.storeToken(data);
+      reset();
       setLoading(false);
     } catch (error) {
       console.log("LOGIN SCREEN ERROR:", error);
       setLoading(false);
-      alert("No server response");
     }
   };
   if (loading) return <ActivityIndicator visible={true} />;
@@ -67,7 +60,7 @@ function LoginScreen({ navigation }) {
         <FormProvider {...methods} onSubmit={onSubmit}>
           <AppText style={styles.formLabel}>Username</AppText>
           <AppFormField
-            name="identifier"
+            name="username"
             autoCapitalize="none"
             autoCorrect={false}
           />

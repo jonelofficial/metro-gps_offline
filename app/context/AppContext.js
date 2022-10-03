@@ -4,6 +4,7 @@ import { useKeepAwake } from "expo-keep-awake";
 import * as SplashScreen from "expo-splash-screen";
 import * as MediaLibrary from "expo-media-library";
 import * as Location from "expo-location";
+import jwtDecode from "jwt-decode";
 
 import { Alert, Linking, LogBox, ToastAndroid } from "react-native";
 import AuthContext from "../auth/context";
@@ -63,8 +64,9 @@ function AppContext({ children }) {
       const user = await authStorage.getUser();
       const json = await JSON.parse(user);
       if (!json) return null;
-      setToken(json.jwt);
-      setUser(json);
+      const newUser = jwtDecode(json.token);
+      setToken(json.token);
+      setUser(newUser);
     } catch (e) {
       console.log("ERROR ON RESTORING USER", e);
     } finally {

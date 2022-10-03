@@ -1,6 +1,6 @@
 import url from "./url";
 
-const tripUrl = `${url.BASEURL}/api/gas-stations`;
+const tripUrl = `${url.BASEURL}/gas-station/stations`;
 
 export const getGasStation = async (token) => {
   try {

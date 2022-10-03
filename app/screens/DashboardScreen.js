@@ -10,14 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import {
-  createTrip,
-  deleteTrip,
-  getTrip,
-  searchTripInfiniteScroll,
-  tripInfiniteScroll,
-  updateTrip,
-} from "../api/TripApi";
+import { findTrip, getTrip, updateTrip } from "../api/TripApi";
 import AppText from "../components/AppText";
 import AuthContext from "../auth/context";
 import AppHeading from "../components/AppHeading";
@@ -47,6 +40,8 @@ function DashboardScreen({ navigation }) {
   const [trips, setTrips] = useState([]);
   const [image, setImage] = useState();
   const [isModalVisible, setModalVisible] = useState(false);
+  const [page, setPage] = useState(1);
+  const [tripDate, setTripDate] = useState();
 
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
@@ -55,17 +50,8 @@ function DashboardScreen({ navigation }) {
 
   const fetchTrip = async () => {
     try {
-      const res = await tripInfiniteScroll(
-        token,
-        user.user.trip_template,
-        user.user.id,
-        data
-      );
-
-      if (
-        res.meta.pagination.start === res.meta.pagination.total &&
-        res.meta.pagination.total !== 0
-      ) {
+      const res = await getTrip(token, page + 1);
+      if (res.data.length === 0) {
         setEndLoading(false);
         return setNoData(true);
       }
@@ -84,17 +70,8 @@ function DashboardScreen({ navigation }) {
 
   const searchFetchTrip = async () => {
     try {
-      const res = await searchTripInfiniteScroll(
-        token,
-        user.user.trip_template,
-        user.user.id,
-        data,
-        text
-      );
-      if (
-        res.meta.pagination.start === res.meta.pagination.total &&
-        res.meta.pagination.total !== 0
-      ) {
+      const res = await findTrip(token, tripDate, page + 1);
+      if (res.data.length === 0) {
         setEndLoading(false);
         return setNoData(true);
       }
@@ -112,18 +89,18 @@ function DashboardScreen({ navigation }) {
   };
 
   useEffect(() => {
-    setImage(user.user.profile ? `${url.BASEURL}/${user.user.profile}` : null);
+    setImage(user.profile ? `${url.BASEURL}/${user.profile}` : null);
 
     // Handle if have an unsave trip from map screen
     (async () => {
       try {
-        const tripCache = await cache.get(user.user.id);
+        const tripCache = await cache.get(user.userId);
         if (tripCache === null) return handleRefresh();
 
         setLoading(true);
 
         await updateTrip(tripCache.id, tripCache.dataObj, token);
-        await AsyncStorage.removeItem("cache" + user.user.id);
+        await AsyncStorage.removeItem("cache" + user.userId);
         handleRefresh();
       } catch (error) {
         alert("ERROR ON CACHE: ", error);
@@ -143,13 +120,14 @@ function DashboardScreen({ navigation }) {
 
   const handleRefresh = async () => {
     try {
+      setPage(1);
       setLoading(true);
       setTrips([]);
       setData(0);
       setNoData(false);
       setText(null);
 
-      const res = await getTrip(token, user.user.trip_template, user.user.id);
+      const res = await getTrip(token, 1);
       setTrips(res.data);
       setData(res.data.length);
       slideIn();
@@ -235,9 +213,11 @@ function DashboardScreen({ navigation }) {
   const onEndReached = async () => {
     if (data >= 25 && noData === false && text === null && !endLoading) {
       setEndLoading(true);
+      setPage((value) => value + 1);
       await fetchTrip();
     } else if (data >= 25 && noData === false && text && !endLoading) {
       setEndLoading(true);
+      setPage((value) => value + 1);
       await searchFetchTrip();
     } else {
       return;
@@ -249,14 +229,14 @@ function DashboardScreen({ navigation }) {
       <Screen>
         <Card
           image={image && { uri: image }}
-          name={`${user.user.first_name} ${user.user.last_name}`}
+          name={`${user.first_name} ${user.last_name}`}
           onPress={toggleModal}
         />
         <SearchBar
           setData={setData}
           setTrips={setTrips}
-          populate={user.user.trip_template}
-          user_id={user.user.id}
+          // populate={user.user.trip_template}
+          user_id={user.userId}
           token={token}
           fetchTrip={handleRefresh}
           text={text}
@@ -264,6 +244,8 @@ function DashboardScreen({ navigation }) {
           setNoData={setNoData}
           setLoading={setLoading}
           loading={loading}
+          page={page}
+          setTripDate={setTripDate}
         />
         <Fonts>
           <AppHeading
@@ -286,7 +268,7 @@ function DashboardScreen({ navigation }) {
             <FlatList
               onScroll={onScroll}
               data={trips}
-              keyExtractor={(initialData) => initialData.id.toString()}
+              keyExtractor={(initialData) => initialData._id.toString()}
               renderItem={renderItem}
               ItemSeparatorComponent={ListItemSeperator}
               refreshing={false}

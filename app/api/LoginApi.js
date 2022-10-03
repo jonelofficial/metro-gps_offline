@@ -1,6 +1,6 @@
 import url from "./url";
 
-const baseUrl = `${url.BASEURL}/api/auth/local`;
+const baseUrl = `${url.BASEURL}/auth/login`;
 
 export const useLogin = async (user) => {
   try {

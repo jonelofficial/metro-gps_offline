@@ -2,7 +2,7 @@ import * as Yup from "yup";
 
 // LOGIN SCREEN
 export const loginSchema = Yup.object().shape({
-  identifier: Yup.string().required().label("Username"),
+  username: Yup.string().required().label("Username"),
   password: Yup.string().required().label("Password"),
 });
 

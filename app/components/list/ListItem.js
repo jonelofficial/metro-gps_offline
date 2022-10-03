@@ -9,34 +9,30 @@ import AppText from "../AppText";
 import Fonts from "../Fonts";
 
 function ListItem({ onPress, item }) {
-  if (item.attributes.locations.data.length === 0 || !item.attributes.points)
-    return null;
+  if (item.locations.length === 0 || !item.points) return null;
 
-  const arrayLength = item.attributes.locations.data.length - 1;
+  const arrayLength = item.locations.length - 1;
 
   //  Getting KM
 
-  const meter = getPathLength(item.attributes.points);
+  const meter = getPathLength(item.points);
   const km = meter / 1000;
 
   //  Getting TIME
 
-  const date1 = dayjs(
-    item.attributes.locations.data[arrayLength].attributes.date
-  );
-  const date2 = dayjs(item.attributes.locations.data[0].attributes.date);
+  const date1 = dayjs(item.locations[arrayLength].date);
+  const date2 = dayjs(item.locations[0].date);
   const minutes = date1.diff(date2, "minutes");
   const hours = date1.diff(date2, "h");
   const finalHours = hours * 60;
   const minute = minutes - finalHours;
   const hour = `${hours}.${minute === 0 ? "00" : minute}`;
 
-  const name = dayjs(item.attributes.trip_date).format("h:mm A");
-  const date = dayjs(item.attributes.trip_date).format("MM-DD-YY");
-  const location = !item.attributes.locations.data[arrayLength].attributes
-    .address[0]
+  const name = dayjs(item.trip_date).format("h:mm A");
+  const date = dayjs(item.trip_date).format("MM-DD-YY");
+  const location = !item.locations[arrayLength].address[0]
     ? "Unknown"
-    : item.attributes.locations.data[arrayLength].attributes.address[0].city;
+    : item.locations[arrayLength].address[0].city;
 
   return (
     <TouchableOpacity onPress={onPress}>
@@ -55,14 +51,14 @@ function ListItem({ onPress, item }) {
             }}
           >
             <AppText style={{ fontSize: 14, color: colors.success }}>{`#${
-              item.attributes.trip_type === "office"
-                ? item.id
-                : item.attributes.trip_type === "delivery"
-                ? item.attributes.delivery.data?.attributes.booking_number
-                : item.attributes.trip_type === "feeds_delivery"
-                ? item.attributes.feeds_delivery.data?.attributes.bags
-                : item.attributes.trip_type === "hauling" &&
-                  item.attributes.hauling.data?.attributes.trip_number
+              item.user_id.trip_template === "office"
+                ? item._id.slice(0, 1 - 0) + "..."
+                : item.user_id.trip_template === "delivery"
+                ? item.attributes.delivery?.attributes.booking_number
+                : item.user_id.trip_template === "feeds_delivery"
+                ? item.attributes.feeds_delivery?.attributes.bags
+                : item.user_id.trip_template === "hauling" &&
+                  item.attributes.hauling?.attributes.trip_number
             }`}</AppText>
           </View>
           {/*  */}

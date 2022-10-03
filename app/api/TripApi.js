@@ -1,6 +1,6 @@
 import url from "./url";
 
-const tripUrl = `${url.BASEURL}/api/trips`;
+const tripUrl = `${url.BASEURL}/office/trips`;
 
 export const createTrip = async (data, token) => {
   try {
@@ -19,16 +19,13 @@ export const createTrip = async (data, token) => {
   }
 };
 
-export const getTrip = async (token, populate, user_id) => {
+export const getTrip = async (token, page) => {
   try {
-    const response = await fetch(
-      `${tripUrl}?filters[user_id][$eq]=${user_id}&sort[id]=DESC&populate=${populate},locations,diesels`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`${tripUrl}/user?page=${page}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const json = await response.json();
     return json;
   } catch (error) {
@@ -56,10 +53,10 @@ export const getSingleTrip = async (token, populate, trip_id) => {
 /*
  * FOR SEARCH FUNCTION
  */
-export const findTrip = async (token, populate, user_id, trip_date) => {
+export const findTrip = async (token, trip_date, page) => {
   try {
     const response = await fetch(
-      `${tripUrl}?filters[user_id][$eq]=${user_id}&sort[id]=DESC&filters[trip_date][$gte]=${trip_date}T00:00:00&filters[trip_date][$lte]=${trip_date}T23:59:59&populate=${populate},locations,diesels`,
+      `${tripUrl}/search?searchDate=${trip_date}&page=${page}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -90,30 +87,7 @@ export const updateTrip = async (id, data, token) => {
   }
 };
 
-export const tripInfiniteScroll = async (token, populate, user_id, start) => {
-  try {
-    const response = await fetch(
-      `${tripUrl}?filters[user_id][$eq]=${user_id}&sort[id]=DESC&populate=${populate},locations,diesels&pagination[start]=${start}&pagination[limit]=25`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    const json = await response.json();
-    return json;
-  } catch (error) {
-    console.log("GET-INFINITE-TRIP API ERROR: ", error);
-  }
-};
-
-export const searchTripInfiniteScroll = async (
-  token,
-  populate,
-  user_id,
-  start,
-  trip_date
-) => {
+export const searchTripInfiniteScroll = async (token, trip_date, page) => {
   try {
     const response = await fetch(
       `${tripUrl}?filters[user_id][$eq]=${user_id}&sort[id]=DESC&populate=${populate},locations,diesels&filters[trip_date][$gte]=${trip_date}T00:00:00&filters[trip_date][$lte]=${trip_date}T23:59:59&pagination[start]=${start}&pagination[limit]=25`,
