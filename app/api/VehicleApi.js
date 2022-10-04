@@ -1,10 +1,10 @@
 import url from "./url";
 
-const baseUrl = `${url.BASEURL}/api/vehicles`;
+const baseUrl = `${url.BASEURL}/vehicle/car/user`;
 
 export const getVehicle = async (id, token) => {
   try {
-    const response = await fetch(`${baseUrl}?filters[plate_no][$eq]=${id}`, {
+    const response = await fetch(`${baseUrl}?plateNo=${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },

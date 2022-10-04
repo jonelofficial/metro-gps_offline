@@ -44,16 +44,17 @@ function ScanScreen() {
       setIsLoading(true);
 
       const vehicleRes = await getVehicle(data.vehicle_id.toUpperCase(), token);
-      if (vehicleRes?.error || vehicleRes?.meta.pagination.total === 0) {
-        alert("Vehicle not found");
+
+      if (vehicleRes?.error) {
+        alert(vehicleRes.error);
         setIsLoading(false);
         return setScanned(true);
       }
 
       setQrData({
-        vehicle_id: vehicleRes.data[0].attributes.plate_no,
-        title: `${vehicleRes.data[0].attributes.plate_no} ${vehicleRes.data[0].attributes.brand}`,
-        description: vehicleRes.data[0].attributes.name,
+        vehicle_id: vehicleRes.data[0].plate_no,
+        title: `${vehicleRes.data[0].plate_no} ${vehicleRes.data[0].brand}`,
+        description: vehicleRes.data[0].name,
         targetScreen: "for validation only",
         profile: null,
       });
@@ -109,16 +110,16 @@ function ScanScreen() {
           token
         );
 
-        if (vehicleRes?.error || vehicleRes?.meta.pagination.total === 0) {
-          alert("Vehicle not found");
+        if (vehicleRes?.error) {
+          alert(vehicleRes.error);
           setIsLoading(false);
           return setScanned(true);
         }
 
         setQrData({
-          vehicle_id: vehicleRes.data[0].attributes.plate_no,
-          title: `${vehicleRes.data[0].attributes.plate_no} ${vehicleRes.data[0].attributes.brand}`,
-          description: vehicleRes.data[0].attributes.name,
+          vehicle_id: vehicleRes.data[0],
+          title: `${vehicleRes.data[0].plate_no} ${vehicleRes.data[0].brand}`,
+          description: vehicleRes.data[0].name,
           targetScreen: "for validation only",
           profile: null,
         });

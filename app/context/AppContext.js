@@ -21,6 +21,8 @@ function AppContext({ children }) {
   const [user, setUser] = useState();
   const [token, setToken] = useState();
 
+  console.log(user);
+
   useEffect(() => {
     ToastAndroid.show(`Welcome to Metro GPS`, ToastAndroid.SHORT);
     (async () => {

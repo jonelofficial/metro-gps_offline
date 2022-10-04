@@ -65,6 +65,7 @@ function MapDetailsScreen({ route }) {
       }
     );
   };
+  console.log(gasStation);
 
   return (
     <Screen>
@@ -105,8 +106,8 @@ function MapDetailsScreen({ route }) {
             );
           })}
 
-          {/* {item.diesels.data.length >= 1 &&
-            item.diesels.data.map((gasItem, i) => {
+          {item.diesels.length >= 1 &&
+            item.diesels.map((gasItem, i) => {
               return (
                 <Marker
                   key={i}
@@ -121,7 +122,7 @@ function MapDetailsScreen({ route }) {
                   }}
                 ></Marker>
               );
-            })} */}
+            })}
         </MapView>
         {markerData || gasData ? (
           <View style={styles.dragWrapper}>
@@ -180,11 +181,11 @@ function MapDetailsScreen({ route }) {
                 <AppText style={styles.legendText}>ARRIVED</AppText>
               </View>
             )}
-            {/* {item.diesels.data.length >= 1 && (
+            {item.diesels.length >= 1 && (
               <View style={styles.gasWrapper}>
                 <AppText style={styles.legendText}>GAS</AppText>
               </View>
-            )} */}
+            )}
             {points && (
               <View style={styles.lineWrapper}>
                 <AppText style={styles.legendText}>ROUTE</AppText>
@@ -230,13 +231,10 @@ function MapDetailsScreen({ route }) {
                 {item.trip_type === "hauling" ? undefined : (
                   <AppText>Total Location: {latlong.length}</AppText>
                 )}
-                {/* <AppText>Total Gas: {item.diesels.data.length}</AppText> */}
+                <AppText>Total Gas: {item.diesels.length}</AppText>
                 <AppText>Odometer Out: {item.odometer}</AppText>
                 <AppText>Odometer Done: {item.odometer_done}</AppText>
                 <AppText>Companion: {item.companion}</AppText>
-                {item?.feeds_delivery && (
-                  <AppText>Bags: {item.feeds_delivery.data?.bags}</AppText>
-                )}
               </>
             ) : !gasData ? (
               <>
@@ -270,7 +268,9 @@ function MapDetailsScreen({ route }) {
                 </AppText>
                 <AppText>
                   Gas Station:
-                  {gasStation[gasData.gas_station_id - 1].label}
+                  {gasStation.map((item) => {
+                    return item.value === gasData.gas_station;
+                  })}
                 </AppText>
                 <AppText>Liter: {gasData.liter}</AppText>
                 <AppText>Odometer: {gasData.odometer}</AppText>

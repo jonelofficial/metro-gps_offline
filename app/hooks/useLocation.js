@@ -56,17 +56,11 @@ export default useLocation = () => {
 
       const api = await createLocation(
         {
-          data: {
-            trip_id: 1,
-            lat: result.coords.latitude,
-            long: result.coords.longitude,
-            date: `${result.timestamp}`,
-            address: res,
-            is_pin: true,
-            trip: 1,
-            status: "arrived",
-            trip: trip,
-          },
+          trip_id: trip,
+          lat: result.coords.latitude,
+          long: result.coords.longitude,
+          address: res,
+          status: "arrived",
         },
         token
       );
@@ -91,17 +85,11 @@ export default useLocation = () => {
 
       const api = await createLocation(
         {
-          data: {
-            trip_id: 1,
-            lat: result.coords.latitude,
-            long: result.coords.longitude,
-            date: `${result.timestamp}`,
-            address: res,
-            is_pin: false,
-            trip: 1,
-            status: "left",
-            trip: trip,
-          },
+          trip_id: trip,
+          lat: result.coords.latitude,
+          long: result.coords.longitude,
+          address: res,
+          status: "left",
         },
         token
       );

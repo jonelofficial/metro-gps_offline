@@ -2,15 +2,16 @@ import url from "./url";
 
 const tripUrl = `${url.BASEURL}/office/trips`;
 
-export const createTrip = async (data, token) => {
+export const createTrip = async (form, token) => {
   try {
-    const response = await fetch(tripUrl, {
+    const response = await fetch(`${url.BASEURL}/office/trip`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
+        Accept: "application/json",
+        "Content-Type": "multipart/form-data",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(data),
+      body: form,
     });
     const json = await response.json();
     return json;
@@ -19,6 +20,7 @@ export const createTrip = async (data, token) => {
   }
 };
 
+// USED
 export const getTrip = async (token, page) => {
   try {
     const response = await fetch(`${tripUrl}/user?page=${page}`, {
@@ -33,25 +35,8 @@ export const getTrip = async (token, page) => {
   }
 };
 
-export const getSingleTrip = async (token, populate, trip_id) => {
-  try {
-    const response = await fetch(
-      `${tripUrl}/${trip_id}?populate=${populate},locations`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    const json = await response.json();
-    return json;
-  } catch (error) {
-    console.log("GET-SINGLE-TRIP API ERROR: ", error);
-  }
-};
-
 /*
- * FOR SEARCH FUNCTION
+ * FOR SEARCH FUNCTION // USED
  */
 export const findTrip = async (token, trip_date, page) => {
   try {
@@ -70,6 +55,7 @@ export const findTrip = async (token, trip_date, page) => {
   }
 };
 
+// USED
 export const updateTrip = async (id, data, token) => {
   try {
     const response = await fetch(`${tripUrl}/${id}`, {
@@ -86,6 +72,23 @@ export const updateTrip = async (id, data, token) => {
     console.log("UPDATE-TRIP API ERROR: ", error);
   }
 };
+
+/*
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+*/
 
 export const searchTripInfiniteScroll = async (token, trip_date, page) => {
   try {
@@ -117,5 +120,22 @@ export const deleteTrip = async (id, token) => {
     return json;
   } catch (error) {
     console.log("DELETE-TRIP API ERROR: ", error);
+  }
+};
+
+export const getSingleTrip = async (token, populate, trip_id) => {
+  try {
+    const response = await fetch(
+      `${tripUrl}/${trip_id}?populate=${populate},locations`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+    const json = await response.json();
+    return json;
+  } catch (error) {
+    console.log("GET-SINGLE-TRIP API ERROR: ", error);
   }
 };

@@ -13,8 +13,6 @@ import {
 
 import { transpoDetailsSchema } from "../config/schema";
 import { createTrip } from "../api/TripApi";
-import { getVehicle } from "../api/VehicleApi";
-import { uploadImage } from "../api/UploadImage";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import AppText from "../components/AppText";
 import AppTextInput from "../components/AppTextInput";
@@ -34,20 +32,13 @@ function TranspoDetailsScreen({ navigation, route }) {
   const [vehicleInfo, setVehicleInfo] = useState(null);
   const { user, token } = useContext(AuthContext);
 
-  const handleVehicle = async (id) => {
-    const vehicleRes = await getVehicle(id, token);
-    if (vehicleRes) {
-      setVehicleInfo(vehicleRes.data[0]);
-    }
-  };
-
   useEffect(() => {
     if (route.params?.image) {
       clearErrors("odometer_image_path");
       setValue("odometer_image_path", route.params.image);
       setImageUri(route.params.image.uri);
     } else if (route.params?.params.vehicle_id) {
-      handleVehicle(route.params.params.vehicle_id);
+      setVehicleInfo(route.params.params.vehicle_id);
     }
   }, [route.params]);
 
@@ -68,41 +59,30 @@ function TranspoDetailsScreen({ navigation, route }) {
     Keyboard.dismiss();
     setLoading(true);
 
-    if (user.user.trip_template === "office") {
+    if (user.trip_template === "office") {
       try {
         const form = new FormData();
-        form.append("files", {
+        form.append("image", {
+          name: new Date() + "_odometer",
           uri: data.odometer_image_path.uri,
-          name: data.odometer_image_path.filename,
-          type: `image/${data.odometer_image_path.mediaType}`,
+          type: "image/jpg",
         });
+        form.append("vehicle_id", vehicleInfo.vehicle_id);
+        form.append("odometer", data.odometer);
+        form.append("companion", data.companion);
 
-        // Upload image to server then use the path to upload on diff api
-        const res = await uploadImage(form, token);
-        const trip = {
-          data: {
-            trip_date: Date.now(),
-            trip_type: user.user.trip_template,
-            user_id: user.user.id,
-            vehicle_id: vehicleInfo.id,
-            odometer: data.odometer,
-            odometer_image_path: `${res[0].url}`,
-            companion: data.companion,
-          },
-        };
-
-        const res_create = await createTrip(trip, token);
+        const res = await createTrip(form, token);
         reset();
         setImageUri(null);
         setLoading(false);
         navigation.navigate(routes.MAP, {
-          trip: res_create.data,
+          trip: res.data,
         });
       } catch (error) {
         setLoading(false);
-        alert(`ERROR UPLOAD IMAGE: Please try again`);
+        console.log(error);
       }
-    } else if (user.user.trip_template === "feeds_delivery") {
+    } else if (user.trip_template === "feeds_delivery") {
       navigation.navigate(routes.FEEDS_DELIVERY, {
         trip: data,
         vehicle: vehicleInfo,
@@ -110,7 +90,7 @@ function TranspoDetailsScreen({ navigation, route }) {
         setImageUri: setImageUri,
         setLoading: setLoading(false),
       });
-    } else if (user.user.trip_template === "delivery") {
+    } else if (user.trip_template === "delivery") {
       navigation.navigate(routes.DELIVERY, {
         trip: data,
         vehicle: vehicleInfo,
@@ -118,7 +98,7 @@ function TranspoDetailsScreen({ navigation, route }) {
         setImageUri: setImageUri,
         setLoading: setLoading(false),
       });
-    } else if (user.user.trip_template === "hauling") {
+    } else if (user.trip_template === "hauling") {
       navigation.navigate(routes.HAULING, {
         trip: data,
         vehicle: vehicleInfo,
@@ -139,7 +119,7 @@ function TranspoDetailsScreen({ navigation, route }) {
           <FormProvider {...methods} onSubmit={onSubmit}>
             <View style={styles.carDetails}>
               <AppText>
-                Vehicle Plate : {vehicleInfo && vehicleInfo.attributes.plate_no}
+                Vehicle Plate : {vehicleInfo && vehicleInfo.title.split(" ")[0]}
               </AppText>
             </View>
             <AppText style={styles.formLabel}>Odometer:</AppText>
@@ -206,7 +186,7 @@ function TranspoDetailsScreen({ navigation, route }) {
             />
             <Spacer />
             <SubmitButton
-              title={user.user.trip_template === "office" ? "Drive" : "Next"}
+              title={user.trip_template === "office" ? "Drive" : "Next"}
             />
           </FormProvider>
         </Screen>

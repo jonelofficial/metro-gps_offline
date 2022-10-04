@@ -1,6 +1,6 @@
 import url from "./url";
 
-const tripUrl = `${url.BASEURL}/api/locations`;
+const tripUrl = `${url.BASEURL}/office/location`;
 
 export const createLocation = async (data, token) => {
   try {

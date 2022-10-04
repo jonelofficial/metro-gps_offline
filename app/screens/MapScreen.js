@@ -16,28 +16,16 @@ import { useStopwatch } from "react-timer-hook";
 import { useForm } from "react-hook-form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import {
-  arrivedDeliverySchema,
-  haulingFirstArrivedSchema,
-  haulingLastArrivedSchema,
-  haulingLastLeftSchema,
-  leftDeliverySchema,
-  mapDoneSchema,
-  mapGasSchema,
-} from "../config/schema";
-import { createTrip, getSingleTrip, updateTrip } from "../api/TripApi";
+import { mapDoneSchema, mapGasSchema } from "../config/schema";
+import { getSingleTrip, updateTrip } from "../api/TripApi";
 import { getGasStation } from "../api/GasStationApi";
 import { gasCar } from "../api/DieselApi";
-import { createDelivery, updateDelivery } from "../api/DeliveryApi";
-import { createHauling } from "../api/HaulingApi";
 import AppButton from "../components/AppButton";
 import AuthContext from "../auth/context";
 import ActivityIndicator from "../components/ActivityIndicator";
 import AppText from "../components/AppText";
 import cache from "../utility/cache";
-import DeliveryModal from "../components/modals/DeliveryModal";
-import DeliveryLeftModal from "../components/modals/DeliveryLeftModal";
-import HaulingModal from "../components/modals/HaulingModal";
+
 import DoneModal from "../components/modals/DoneModal";
 import useInternetStatus from "../hooks/useInternetStatus";
 import Screen from "../components/Screen";
@@ -63,15 +51,7 @@ function MapScreen({ route, navigation }) {
   const [value, setValue] = useState(null);
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
-  // HAULING  ARRIVED MODAL
-  const [haulingModal, setHaulingModal] = useState(false);
-  // HAULING  LEFT MODAL
-  const [haulingLeftModal, setHaulingLeftModal] = useState(false);
-  // DELIVERY ARRIVED MODAL
-  const [arrivedModal, setArrivedModal] = useState(false);
-  // DELIVERY LEFT MODAL
-  const [leftModal, setLeftModal] = useState(false);
-  const [deliveryObj, setDeliveryObjt] = useState();
+
   // DONE MODAL
   const [doneModal, setDoneModal] = useState(false);
   const [doneLoading, setDoneLoading] = useState(false);
@@ -84,32 +64,6 @@ function MapScreen({ route, navigation }) {
 
   // TIMER
   const { seconds, minutes, hours } = useStopwatch({ autoStart: true });
-
-  // HAULING  ARRIVED FORM
-  const methodHaulingArrived = useForm({
-    resolver: yupResolver(
-      trip?.attributes.locations.data.length === 1
-        ? haulingFirstArrivedSchema
-        : trip?.attributes.locations.data.length === 2
-        ? haulingLastLeftSchema
-        : haulingLastArrivedSchema
-    ),
-    method: "onTouched",
-  });
-  const { reset: haulingReset } = methodHaulingArrived;
-
-  // DELIVERY ARRIVED FORM
-  const methodDelivery = useForm({
-    resolver: yupResolver(arrivedDeliverySchema),
-    mode: "onSubmit",
-  });
-  const { reset: deliveryReset } = methodDelivery;
-
-  // DELIVERY LEFT FORM
-  const methodLeftDelivery = useForm({
-    resolver: yupResolver(leftDeliverySchema),
-    mode: "onSubmit",
-  });
 
   // DONE FORM
   const methodDone = useForm({
@@ -137,35 +91,12 @@ function MapScreen({ route, navigation }) {
         text: "YES",
         onPress: noInternet
           ? () => BackHandler.exitApp()
-          : user.user.trip_template === "delivery" && !noInternet
-          ? async () => {
-              if (trip?.attributes.locations.data.length % 2 !== 0) {
-                setArrivedModal(true);
-              } else {
-                await AsyncStorage.removeItem("cache" + user.user.id);
-                navigation.replace(routes.DASHBOARD);
-              }
-            }
-          : user.user.trip_template === "office" && !noInternet
-          ? async () => {
-              if (trip?.attributes.locations.data.length % 2 !== 0) {
+          : async () => {
+              if (trip?.locations.length % 2 !== 0) {
                 await handleArrivedButton();
               }
               setDoneModal(true);
-            }
-          : (user.user.trip_template === "feeds_delivery" ||
-              user.user.trip_template === "hauling") &&
-            !noInternet
-          ? async () => {
-              if (trip?.attributes.locations.data.length > 3) {
-                setDoneModal(true);
-              } else {
-                alert(
-                  "Looks like your transaction still not done. Please finish trip with 2 left and 2 arrived"
-                );
-              }
-            }
-          : () => null,
+            },
       },
     ]);
     return true;
@@ -174,7 +105,7 @@ function MapScreen({ route, navigation }) {
   useEffect(() => {
     (async () => {
       await fetchGasStation();
-      await handleLeftButton(route.params.trip.id);
+      await handleLeftButton();
     })();
   }, []);
 
@@ -206,14 +137,7 @@ function MapScreen({ route, navigation }) {
 
   // APPSTATE
   const _handleAppStateChange = (nextAppState) => {
-    if (
-      nextAppState === "background" &&
-      (user.user.trip_template === "office" ||
-        user.user.trip_template === "feeds_delivery" ||
-        user.user.trip_template === "hauling" ||
-        (user.user.trip_template === "delivery" &&
-          trip.attributes.locations.data.length < 1))
-    ) {
+    if (nextAppState === "background" && user.trip_template === "office") {
       const newTripObj = {
         dataObj: {
           data: {
@@ -224,7 +148,7 @@ function MapScreen({ route, navigation }) {
         },
         id: trip?.id,
       };
-      cache.store(user.user.id, newTripObj);
+      cache.store(user.userId, newTripObj);
     }
   };
 
@@ -248,31 +172,21 @@ function MapScreen({ route, navigation }) {
     const populate = user.user.trip_template;
     const res = await getSingleTrip(token, populate, trip_id);
     setTrip(res.data);
-
-    // PROCESS THIS IF TRIP TEMPLATE OF THE USER IS DELIVERY
-    user.user.trip_template === "delivery" &&
-      setDeliveryObjt({
-        trip_date: Date.now(),
-        trip_type: res.data.attributes.delivery.data.attributes.trip_type,
-        route: res.data.attributes.delivery.data.attributes.route,
-        booking_number:
-          res.data.attributes.delivery.data.attributes.booking_number,
-      });
   };
 
   // ADD LEFT LOCATION AND UPDATE POINTS ROUTE ON THE TRIP TRANSACTION
-  const handleLeftButton = async (tripID) => {
+  const handleLeftButton = async () => {
     try {
       setLeftLoading(true);
-      const leftRes = await handleLeft(tripID);
+      const leftRes = await handleLeft(trip.id);
       setLocationId((currentValue) => [...currentValue, leftRes.id]);
       const newObjt = {
         data: { points: points },
       };
 
       // Change trip id parameter to pass on function
-      await updateTrip(tripID, newObjt, token);
-      await fetchTrip(tripID);
+      await updateTrip(trip.id, newObjt, token);
+      // await fetchTrip(tripID);
       setLeftLoading(false);
       handleSuccess();
     } catch (error) {
@@ -293,7 +207,7 @@ function MapScreen({ route, navigation }) {
 
       // Change trip id parameter to pass on function
       await updateTrip(trip.id, newObjt, token);
-      await fetchTrip(trip.id);
+      // await fetchTrip(trip.id);
       setArrivedLoading(false);
       handleSuccess();
     } catch (error) {
@@ -355,143 +269,6 @@ function MapScreen({ route, navigation }) {
     }
   };
 
-  /*
-  Delivery
-  */
-  // ARRIVED BUTTON NEW FUNCTION: FOR DELIVERY TRIP TEMPLATE OF USER, UPDATE DELIVERY TRANSACTION WITH CRATES DETAILS AND UPDATE DONE ODOMETER ON THE TRIP TRANSACTION
-  const handleDeliveryArrived = async (data) => {
-    try {
-      Keyboard.dismiss();
-      setArrivedLoading(true);
-      const deliveryId = trip.attributes.delivery.data.id;
-      const deliveryObj = {
-        data: {
-          temperature_arrived: data.temperature_arrived,
-          trip_problem: data.trip_problem,
-          crates_dropped: data.crates_dropped,
-          crates_collected: data.crates_collected,
-          crates_lent: data.crates_lent,
-        },
-      };
-      const tripObj = {
-        data: {
-          odometer_done: data.odometer,
-        },
-      };
-
-      await updateDelivery(deliveryId, deliveryObj, token);
-      await updateTrip(trip.id, tripObj, token);
-      await handleArrivedButton();
-      deliveryReset();
-      setArrivedModal(false);
-    } catch (error) {
-      setArrivedLoading(false);
-      return alert("ERROR: ", error);
-    }
-  };
-
-  /*
-  Delivery
-  */
-  // LEFT BUTTON NEW FUNCTION: FOR DELIVERY TRIP TEMPLATE OF USER, CREATE NEW TRIP TRANSACTION WITH SOME PREVIOUS TRIP TRANSACTION DETAILS THEN CREATE NEW DELIVERY TRANSACTION
-
-  const handleDeliveryLeft = async (data) => {
-    setLeftLoading(true);
-    const newTripObj = {
-      data: {
-        trip_date: Date.now(),
-        trip_type: user.user.trip_template,
-        user_id: user.user.id,
-        vehicle_id: trip.attributes.vehicle_id,
-        companion: data.companion,
-        odometer: data.odometer,
-      },
-    };
-
-    try {
-      const newTripRes = await handleDeliveryPostTrip(newTripObj);
-      const delObjt = {
-        data: {
-          ...deliveryObj,
-          temperature_left: data.temperature_left,
-          trip_id: newTripRes.data.id,
-        },
-      };
-      const newDeliveryRes = await handlePostDelivery(delObjt);
-      await handleDeliveryUpdateTrip(
-        newDeliveryRes.data.id,
-        newTripRes.data.id
-      );
-      await handleLeftButton(newTripRes.data.id);
-      setLeftModal(false);
-    } catch (error) {
-      alert("ERROR HANDLE DELIVERY LEFT: ", error);
-    }
-  };
-
-  // 1
-  const handleDeliveryPostTrip = async (trip) => {
-    const createRes = await createTrip(trip, token);
-    if (createRes) {
-      return createRes;
-    } else {
-      setLeftLoading(false);
-      return alert("ERROR POST TRIP: Server unreachable. Please try again");
-    }
-  };
-
-  // 2
-  const handlePostDelivery = async (deliveryObj) => {
-    const delRes = await createDelivery(deliveryObj, token);
-    if (delRes) {
-      return delRes;
-    }
-    setLeftLoading(false);
-    return alert("ERROR POST DELIVERY: Server unreachable. Please try again");
-  };
-
-  // 3
-  const handleDeliveryUpdateTrip = async (id, tripId) => {
-    const updateTripObjt = { data: { delivery: id } };
-
-    const updateRes = await updateTrip(tripId, updateTripObjt, token);
-    console.log("updateRes: ", updateRes);
-    if (updateRes?.error) {
-      setLeftLoading(false);
-      return alert("ERROR UPDATE TRIP: Server unreachable. Please try again");
-    }
-  };
-
-  /*
-  Hauling
-  */
-  const handleHaulingSubmit = async (haulingData) => {
-    try {
-      Keyboard.dismiss();
-      haulingReset();
-      trip?.attributes.locations.data.length === 2
-        ? setLeftLoading(true)
-        : setArrivedLoading(true);
-      const haulingObj = {
-        data: {
-          trip_id: trip.id,
-          trip_number: trip.attributes.hauling.data.attributes.trip_number,
-          trip_type: trip.attributes.hauling.data.attributes.trip_type,
-          farm: trip.attributes.hauling.data.attributes.farm,
-          ...haulingData,
-        },
-      };
-      await createHauling(haulingObj, token);
-      trip?.attributes.locations.data.length === 2
-        ? await handleLeftButton(trip.id)
-        : await handleArrivedButton();
-      setHaulingModal(false);
-    } catch (error) {
-      alert("HANDLE HAULING SUBMIT ERROR: ", error);
-      setHaulingModal(false);
-    }
-  };
-
   // GPS
   const {
     currentLocation,
@@ -511,28 +288,17 @@ function MapScreen({ route, navigation }) {
 
   const userLocationChanged = (event) => {
     const newRegion = event.nativeEvent.coordinate;
-    console.log(newRegion);
 
-    if (trip?.attributes.locations.data.length % 2 === 0) {
+    if (trip?.locations.length % 2 === 0) {
       null;
-    } else if (
-      trip?.attributes.locations.data.length !== 0 &&
-      newRegion.speed >= 1.4
-    ) {
+    } else if (trip?.locations.length !== 0 && newRegion.speed >= 1.4) {
       setPoints((currentValue) => [
         ...currentValue,
         { latitude: newRegion.latitude, longitude: newRegion.longitude },
       ]);
     }
 
-    if (
-      noInternet &&
-      (user.user.trip_template === "office" ||
-        user.user.trip_template === "feeds_delivery" ||
-        user.user.trip_template === "hauling" ||
-        (user.user.trip_template === "delivery" &&
-          trip.attributes.locations.data.length < 1))
-    ) {
+    if (noInternet && user.user.trip_template === "office") {
       const newTripObj = {
         dataObj: {
           data: {
@@ -543,7 +309,7 @@ function MapScreen({ route, navigation }) {
         },
         id: trip?.id,
       };
-      cache.store(user.user.id, newTripObj);
+      cache.store(user.userId, newTripObj);
     }
 
     setCurrentLocation({
@@ -597,19 +363,17 @@ function MapScreen({ route, navigation }) {
                   strokeColor={colors.line}
                   strokeWidth={3}
                 />
-                {trip?.attributes.locations.data.map((item, i) => {
+                {trip?.locations.map((item, i) => {
                   const markerTitle = i + 1;
                   return (
                     <Marker
                       key={i}
                       coordinate={{
-                        latitude: item.attributes.lat,
-                        longitude: item.attributes.long,
+                        latitude: item.lat,
+                        longitude: item.long,
                       }}
                       pinColor={
-                        item.attributes.status === "left"
-                          ? colors.danger
-                          : colors.success
+                        item.status === "left" ? colors.danger : colors.success
                       }
                       title={markerTitle.toString()}
                     ></Marker>
@@ -663,32 +427,16 @@ function MapScreen({ route, navigation }) {
                       ? "light"
                       : trip?.attributes.locations.data.length % 2 !== 0
                       ? "light"
-                      : trip?.attributes.locations.data.length >= 3 &&
-                        user.user.trip_template === "feeds_delivery"
-                      ? "light"
-                      : user.user.trip_template === "hauling" &&
-                        trip?.attributes.locations.data.length >= 4
-                      ? "light"
                       : noInternet
                       ? "light"
                       : "danger"
                   }
-                  onPress={
-                    user.user.trip_template === "delivery"
-                      ? () => setLeftModal(true)
-                      : user.user.trip_template === "hauling"
-                      ? () => setHaulingModal(true)
-                      : () => handleLeftButton(trip.id)
-                  }
+                  onPress={handleLeftButton}
                   isLoading={leftLoading}
                   disabled={
                     noInternet ||
                     leftLoading ||
-                    trip?.attributes.locations.data.length % 2 !== 0 ||
-                    (trip?.attributes.locations.data.length >= 3 &&
-                      user.user.trip_template === "feeds_delivery") ||
-                    (user.user.trip_template === "hauling" &&
-                      trip?.attributes.locations.data.length >= 4)
+                    trip?.attributes.locations.data.length % 2 !== 0
                   }
                 />
                 <View style={{ width: "4%" }}></View>
@@ -700,27 +448,16 @@ function MapScreen({ route, navigation }) {
                       ? "light"
                       : trip?.attributes.locations.data.length % 2 === 0
                       ? "light"
-                      : user.user.trip_template === "hauling" &&
-                        trip?.attributes.locations.data.length >= 4
-                      ? "light"
                       : noInternet
                       ? "light"
                       : "success"
                   }
-                  onPress={
-                    user.user.trip_template === "delivery"
-                      ? () => setArrivedModal(true)
-                      : user.user.trip_template === "hauling"
-                      ? () => setHaulingModal(true)
-                      : handleArrivedButton
-                  }
+                  onPress={handleArrivedButton}
                   isLoading={arrivedLoading}
                   disabled={
                     noInternet ||
                     arrivedLoading ||
-                    trip?.attributes.locations.data.length % 2 === 0 ||
-                    (user.user.trip_template === "hauling" &&
-                      trip?.attributes.locations.data.length >= 4)
+                    trip?.attributes.locations.data.length % 2 === 0
                   }
                 />
               </View>
@@ -760,30 +497,13 @@ function MapScreen({ route, navigation }) {
                     ? "light"
                     : trip?.attributes.locations.data.length === 0
                     ? "light"
-                    : user.user.trip_template === "feeds_delivery" &&
-                      trip?.attributes.locations.data.length <= 3
-                    ? "light"
-                    : user.user.trip_template === "hauling" &&
-                      trip?.attributes.locations.data.length <= 3
-                    ? "light"
                     : noInternet
                     ? "light"
                     : "black"
                 }
-                onPress={
-                  user.user.trip_template === "delivery"
-                    ? async () => {
-                        await AsyncStorage.removeItem("cache" + user.user.id);
-                        navigation.replace(routes.DASHBOARD);
-                      }
-                    : () => {
-                        setDoneModal(true);
-                      }
-                }
+                onPress={setDoneModal(true)}
                 disabled={
                   noInternet ||
-                  (user.user.trip_template === "feeds_delivery" &&
-                    trip?.attributes.locations.data.length <= 3) ||
                   trip?.attributes.locations.data.length % 2 !== 0 ||
                   trip?.attributes.locations.data.length === 0 ||
                   arrivedLoading ||
@@ -823,35 +543,6 @@ function MapScreen({ route, navigation }) {
         methodDone={methodDone}
         handleDoneButton={handleDoneButton}
         doneLoading={doneLoading}
-      />
-
-      {/* DELIVERY ARRIVED MODAL */}
-      <DeliveryModal
-        arrivedModal={arrivedModal}
-        setArrivedModal={setArrivedModal}
-        methodDelivery={methodDelivery}
-        handleDeliveryArrived={handleDeliveryArrived}
-        arrivedLoading={arrivedLoading}
-      />
-
-      {/* DELIVERY LEFT MODAL */}
-      <DeliveryLeftModal
-        leftModal={leftModal}
-        setLeftModal={setLeftModal}
-        methodLeftDelivery={methodLeftDelivery}
-        handleDeliveryLeft={handleDeliveryLeft}
-        leftLoading={leftLoading}
-      />
-
-      {/* HAULING MODAL */}
-      <HaulingModal
-        trip={trip}
-        haulingModal={haulingModal}
-        setHaulingModal={setHaulingModal}
-        methodHaulingArrived={methodHaulingArrived}
-        handleHaulingSubmit={handleHaulingSubmit}
-        arrivedLoading={arrivedLoading}
-        leftLoading={leftLoading}
       />
     </>
   );

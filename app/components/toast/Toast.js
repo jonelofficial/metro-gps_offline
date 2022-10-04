@@ -23,7 +23,7 @@ function Toast({ scanned, showToast, data, setScanned, userData }) {
     } else {
       setScanned(true);
       navigation.navigate(routes.TRANSPO_DETAILS, {
-        params: { vehicle_id: data.vehicle_id },
+        params: { vehicle_id: data },
       });
     }
   };
