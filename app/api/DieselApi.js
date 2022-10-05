@@ -1,6 +1,6 @@
 import url from "./url";
 
-const tripUrl = `${url.BASEURL}/api/diesels`;
+const tripUrl = `${url.BASEURL}/office/diesel`;
 
 // Create diesel
 export const gasCar = async (data, token) => {

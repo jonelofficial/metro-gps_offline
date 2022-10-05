@@ -39,6 +39,10 @@ function LoginScreen({ navigation }) {
     try {
       setLoading(true);
       const data = await useLogin(user);
+      if (data.message) {
+        setLoading(false);
+        return alert(`${data.message}`);
+      }
       logIn(data);
       authStorage.storeToken(data);
       reset();

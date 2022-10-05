@@ -7,7 +7,7 @@ export const createTrip = async (form, token) => {
     const response = await fetch(`${url.BASEURL}/office/trip`, {
       method: "POST",
       headers: {
-        Accept: "application/json",
+        // Accept: "application/json",
         "Content-Type": "multipart/form-data",
         Authorization: `Bearer ${token}`,
       },
@@ -58,7 +58,7 @@ export const findTrip = async (token, trip_date, page) => {
 // USED
 export const updateTrip = async (id, data, token) => {
   try {
-    const response = await fetch(`${tripUrl}/${id}`, {
+    const response = await fetch(`${url.BASEURL}/office/trip/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -123,16 +123,13 @@ export const deleteTrip = async (id, token) => {
   }
 };
 
-export const getSingleTrip = async (token, populate, trip_id) => {
+export const getSingleTrip = async (token, trip_id) => {
   try {
-    const response = await fetch(
-      `${tripUrl}/${trip_id}?populate=${populate},locations`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`${tripUrl}/${trip_id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     const json = await response.json();
     return json;
   } catch (error) {

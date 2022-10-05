@@ -17,7 +17,7 @@ import { useForm } from "react-hook-form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { mapDoneSchema, mapGasSchema } from "../config/schema";
-import { getSingleTrip, updateTrip } from "../api/TripApi";
+import { updateTrip } from "../api/TripApi";
 import { getGasStation } from "../api/GasStationApi";
 import { gasCar } from "../api/DieselApi";
 import AppButton from "../components/AppButton";
@@ -105,7 +105,9 @@ function MapScreen({ route, navigation }) {
   useEffect(() => {
     (async () => {
       await fetchGasStation();
-      await handleLeftButton();
+      const trip_id = await route.params.trip._id;
+      setTrip(route.params.trip);
+      await handleLeftButton(trip_id);
     })();
   }, []);
 
@@ -137,16 +139,14 @@ function MapScreen({ route, navigation }) {
 
   // APPSTATE
   const _handleAppStateChange = (nextAppState) => {
-    if (nextAppState === "background" && user.trip_template === "office") {
+    if (nextAppState === "background") {
       const newTripObj = {
         dataObj: {
-          data: {
-            locations: locationId,
-            odometer_done: "-1",
-            points: points,
-          },
+          locations: locationId,
+          odometer_done: "-1",
+          points: points,
         },
-        id: trip?.id,
+        id: trip?._id,
       };
       cache.store(user.userId, newTripObj);
     }
@@ -159,7 +159,7 @@ function MapScreen({ route, navigation }) {
       const gasRes = await getGasStation(token);
       setItems(
         gasRes.data.map((item) => {
-          return { label: item.attributes.label, value: item.id };
+          return { label: item.label, value: item._id };
         })
       );
     } catch (error) {
@@ -167,31 +167,24 @@ function MapScreen({ route, navigation }) {
     }
   };
 
-  // FETCHING THE TRIP TRANSACTION TO REUSE THE DETAILS
-  const fetchTrip = async (trip_id) => {
-    const populate = user.user.trip_template;
-    const res = await getSingleTrip(token, populate, trip_id);
-    setTrip(res.data);
-  };
-
   // ADD LEFT LOCATION AND UPDATE POINTS ROUTE ON THE TRIP TRANSACTION
-  const handleLeftButton = async () => {
+  const handleLeftButton = async (trip_id) => {
     try {
       setLeftLoading(true);
-      const leftRes = await handleLeft(trip.id);
-      setLocationId((currentValue) => [...currentValue, leftRes.id]);
+      const leftRes = await handleLeft(trip_id);
+      setLocationId((currentValue) => [...currentValue, leftRes._id]);
       const newObjt = {
-        data: { points: points },
+        points: points,
       };
 
-      // Change trip id parameter to pass on function
-      await updateTrip(trip.id, newObjt, token);
-      // await fetchTrip(tripID);
+      const updateTripRes = await updateTrip(trip_id, newObjt, token);
+      setTrip(updateTripRes.data);
       setLeftLoading(false);
       handleSuccess();
     } catch (error) {
       setLeftLoading(false);
-      alert("ERROR: Please try again. ", error);
+      alert("ERROR LEFT BUTTON");
+      console.log("ERROR LEFT BUTTON: Please try again. ", error);
     }
   };
 
@@ -199,20 +192,20 @@ function MapScreen({ route, navigation }) {
   const handleArrivedButton = async () => {
     try {
       setArrivedLoading(true);
-      const rightRes = await handleArrived(trip.id);
-      setLocationId((currentValue) => [...currentValue, rightRes.id]);
+      const rightRes = await handleArrived(trip._id);
+      setLocationId((currentValue) => [...currentValue, rightRes._id]);
       const newObjt = {
-        data: { points: points },
+        points: points,
       };
 
-      // Change trip id parameter to pass on function
-      await updateTrip(trip.id, newObjt, token);
-      // await fetchTrip(trip.id);
+      const updateTripRes = await updateTrip(trip._id, newObjt, token);
+      setTrip(updateTripRes.data);
       setArrivedLoading(false);
       handleSuccess();
     } catch (error) {
       setArrivedLoading(false);
-      alert("ERROR: Please try again. ", error);
+      alert("ERROR ARRIVED BUTTON");
+      console.log("ERROR ARRIVED BUTTON: Please try again. ", error);
     }
   };
 
@@ -222,15 +215,11 @@ function MapScreen({ route, navigation }) {
       Keyboard.dismiss();
       setGasLoading(true);
       const newDieselObj = {
-        data: {
-          ...data,
-          trip_id: trip.id,
-          trip: trip.id,
-          lat: currentLocation.latitude,
-          long: currentLocation.longitude,
-        },
+        ...data,
+        trip_id: trip._id,
+        lat: currentLocation.latitude,
+        long: currentLocation.longitude,
       };
-
       await gasCar(newDieselObj, token);
       setGas((currentValue) => [
         ...currentValue,
@@ -256,16 +245,18 @@ function MapScreen({ route, navigation }) {
       Keyboard.dismiss();
       setDoneLoading(true);
       const newObjt = {
-        data: { odometer_done: vehicle_data.odometer_done, points: points },
+        odometer_done: vehicle_data.odometer_done,
+        points: points,
       };
 
-      await updateTrip(trip.id, newObjt, token);
+      await updateTrip(trip._id, newObjt, token);
       doneReset();
       setDoneLoading(false);
-      await AsyncStorage.removeItem("cache" + user.user.id);
+      await AsyncStorage.removeItem("cache" + user.userId);
       navigation.replace(routes.DASHBOARD);
     } catch (error) {
-      alert("ERROR: ", error);
+      alert("ERROR DONE BUTTON");
+      console.log("ERROR DONE BUTTON", error);
     }
   };
 
@@ -298,7 +289,7 @@ function MapScreen({ route, navigation }) {
       ]);
     }
 
-    if (noInternet && user.user.trip_template === "office") {
+    if (noInternet) {
       const newTripObj = {
         dataObj: {
           data: {
@@ -307,7 +298,7 @@ function MapScreen({ route, navigation }) {
             points: points,
           },
         },
-        id: trip?.id,
+        id: trip?._id,
       };
       cache.store(user.userId, newTripObj);
     }
@@ -405,7 +396,6 @@ function MapScreen({ route, navigation }) {
                 </View>
               )}
             </View>
-
             <View
               style={{
                 padding: 15,
@@ -418,6 +408,7 @@ function MapScreen({ route, navigation }) {
                   seconds < 10 ? `0${seconds}` : seconds >= 10 && seconds
                 }`}</AppText>
               </View>
+
               <View style={styles.buttonWrapper}>
                 <AppButton
                   title="Left"
@@ -425,18 +416,18 @@ function MapScreen({ route, navigation }) {
                   color={
                     leftLoading
                       ? "light"
-                      : trip?.attributes.locations.data.length % 2 !== 0
+                      : trip?.locations.length % 2 !== 0
                       ? "light"
                       : noInternet
                       ? "light"
                       : "danger"
                   }
-                  onPress={handleLeftButton}
+                  onPress={() => handleLeftButton(trip._id)}
                   isLoading={leftLoading}
                   disabled={
                     noInternet ||
                     leftLoading ||
-                    trip?.attributes.locations.data.length % 2 !== 0
+                    trip?.locations.length % 2 !== 0
                   }
                 />
                 <View style={{ width: "4%" }}></View>
@@ -446,7 +437,7 @@ function MapScreen({ route, navigation }) {
                   color={
                     arrivedLoading
                       ? "light"
-                      : trip?.attributes.locations.data.length % 2 === 0
+                      : trip?.locations.length % 2 === 0
                       ? "light"
                       : noInternet
                       ? "light"
@@ -457,12 +448,11 @@ function MapScreen({ route, navigation }) {
                   disabled={
                     noInternet ||
                     arrivedLoading ||
-                    trip?.attributes.locations.data.length % 2 === 0
+                    trip?.locations.length % 2 === 0
                   }
                 />
               </View>
               <Spacer style={{ height: 30 }} />
-
               <View style={styles.otherBtnWrapper}>
                 <TouchableOpacity
                   onPress={() => setModalVisible(true)}
@@ -488,24 +478,25 @@ function MapScreen({ route, navigation }) {
                 </TouchableOpacity>
               </View>
             </View>
+
             <View style={styles.doneWrapper}>
               <AppButton
                 title="Done"
                 style={styles.btnDone}
                 color={
-                  trip?.attributes.locations.data.length % 2 !== 0
+                  trip?.locations.length % 2 !== 0
                     ? "light"
-                    : trip?.attributes.locations.data.length === 0
+                    : trip?.locations.length === 0
                     ? "light"
                     : noInternet
                     ? "light"
                     : "black"
                 }
-                onPress={setDoneModal(true)}
+                onPress={() => setDoneModal(true)}
                 disabled={
                   noInternet ||
-                  trip?.attributes.locations.data.length % 2 !== 0 ||
-                  trip?.attributes.locations.data.length === 0 ||
+                  trip?.locations.length % 2 !== 0 ||
+                  trip?.locations.length === 0 ||
                   arrivedLoading ||
                   leftLoading
                 }

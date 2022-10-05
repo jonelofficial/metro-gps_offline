@@ -23,7 +23,6 @@ export default function GasModal({
   onSubmit,
   loading,
 }) {
-  // console.log(items);
   return (
     <View>
       <Modal
@@ -43,10 +42,7 @@ export default function GasModal({
           </View>
           <Spacer />
 
-          <FormProvider
-            {...method}
-            onSubmit={onSubmit}
-          >
+          <FormProvider {...method} onSubmit={onSubmit}>
             <AppText style={{ marginBottom: 5 }}>Gas Station:</AppText>
 
             <AppFormPicker

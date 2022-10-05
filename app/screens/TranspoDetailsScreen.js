@@ -56,59 +56,34 @@ function TranspoDetailsScreen({ navigation, route }) {
   } = methods;
 
   const onSubmit = async (data) => {
-    Keyboard.dismiss();
-    setLoading(true);
+    try {
+      Keyboard.dismiss();
+      setLoading(true);
 
-    if (user.trip_template === "office") {
-      try {
-        const form = new FormData();
-        form.append("image", {
-          name: new Date() + "_odometer",
-          uri: data.odometer_image_path.uri,
-          type: "image/jpg",
-        });
-        form.append("vehicle_id", vehicleInfo.vehicle_id);
-        form.append("odometer", data.odometer);
-        form.append("companion", data.companion);
+      const form = new FormData();
+      form.append("image", {
+        name: new Date() + "_odometer",
+        uri: data.odometer_image_path.uri,
+        type: "image/jpg",
+      });
+      form.append("vehicle_id", vehicleInfo.vehicle_id._id);
+      form.append("odometer", data.odometer);
+      form.append("companion", data.companion);
 
-        const res = await createTrip(form, token);
-        reset();
-        setImageUri(null);
+      const res = await createTrip(form, token);
+      if (!res) {
         setLoading(false);
-        navigation.navigate(routes.MAP, {
-          trip: res.data,
-        });
-      } catch (error) {
-        setLoading(false);
-        console.log(error);
+        return alert("No server response. Please try Again");
       }
-    } else if (user.trip_template === "feeds_delivery") {
-      navigation.navigate(routes.FEEDS_DELIVERY, {
-        trip: data,
-        vehicle: vehicleInfo,
-        reset: reset,
-        setImageUri: setImageUri,
-        setLoading: setLoading(false),
-      });
-    } else if (user.trip_template === "delivery") {
-      navigation.navigate(routes.DELIVERY, {
-        trip: data,
-        vehicle: vehicleInfo,
-        reset: reset,
-        setImageUri: setImageUri,
-        setLoading: setLoading(false),
-      });
-    } else if (user.trip_template === "hauling") {
-      navigation.navigate(routes.HAULING, {
-        trip: data,
-        vehicle: vehicleInfo,
-        reset: reset,
-        setImageUri: setImageUri,
-        setLoading: setLoading(false),
-      });
-    } else {
+      reset();
+      setImageUri(null);
       setLoading(false);
-      return alert("ERROR: Server unreachable. Please try again");
+      navigation.navigate(routes.MAP, {
+        trip: res.data,
+      });
+    } catch (error) {
+      setLoading(false);
+      console.log(error.toString());
     }
   };
 
