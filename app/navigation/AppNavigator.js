@@ -3,12 +3,10 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 import AppCamera from "../components/AppCamera";
 import DashboardStackNavigator from "./DashboardStackNavigator";
-import DeliveryScreen from "../screens/DeliveryScreen";
-import FeedsDeliveryScreen from "../screens/FeedsDeliveryScreen";
-import HaulingScreen from "../screens/HaulingScreen";
-import MapScreen from "../screens/MapScreen";
+
+import MapScreen from "../screens/office/MapScreen";
 import MapDetailsScreen from "../screens/MapDetailsScreen";
-import TranspoDetailsScreen from "../screens/TranspoDetailsScreen";
+import TranspoDetailsScreen from "../screens/office/TranspoDetailsScreen";
 
 const Stack = createNativeStackNavigator();
 
@@ -30,9 +28,6 @@ const AppNavigator = () => (
 
     <Stack.Screen name="TranspoDetails" component={TranspoDetailsScreen} />
     <Stack.Screen name="AppCamera" component={AppCamera} />
-    <Stack.Screen name="Delivery" component={DeliveryScreen} />
-    <Stack.Screen name="FeedsDelivery" component={FeedsDeliveryScreen} />
-    <Stack.Screen name="Hauling" component={HaulingScreen} />
     <Stack.Screen name="Map" component={MapScreen} />
   </Stack.Navigator>
 );

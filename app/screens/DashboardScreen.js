@@ -10,7 +10,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { findTrip, getTrip, updateTrip } from "../api/TripApi";
+import { findTrip, getTrip, updateTrip } from "../api/office/TripApi";
 import AppText from "../components/AppText";
 import AuthContext from "../auth/context";
 import AppHeading from "../components/AppHeading";
@@ -27,7 +27,8 @@ import LogoutModal from "../components/modals/LogoutModal";
 import Screen from "../components/Screen";
 import SearchBar from "../components/SearchBar";
 import Spacer from "../components/Spacer";
-import url from "../api/url";
+import { BASEURL } from "@env";
+
 import routes from "../navigation/routes";
 
 function DashboardScreen({ navigation }) {
@@ -89,7 +90,7 @@ function DashboardScreen({ navigation }) {
   };
 
   useEffect(() => {
-    setImage(user.profile ? `${url.BASEURL}/${user.profile}` : null);
+    setImage(user.profile ? `${BASEURL}/${user.profile}` : null);
 
     // Handle if have an unsave trip from map screen
     (async () => {

@@ -1,6 +1,6 @@
-import url from "./url";
+import { BASEURL } from "@env";
 
-const tripUrl = `${url.BASEURL}/gas-station/stations`;
+const tripUrl = `${BASEURL}/gas-station/stations`;
 
 export const getGasStation = async (token) => {
   try {

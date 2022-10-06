@@ -65,7 +65,6 @@ function MapDetailsScreen({ route }) {
       }
     );
   };
-  console.log(gasStation);
 
   return (
     <Screen>

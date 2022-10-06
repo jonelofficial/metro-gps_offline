@@ -1,6 +1,6 @@
-import url from "./url";
+import { BASEURL } from "@env";
 
-const baseUrl = `${url.BASEURL}/auth/login`;
+const baseUrl = `${BASEURL}/auth/login`;
 
 export const useLogin = async (user) => {
   try {

@@ -11,7 +11,7 @@ import { getVehicle } from "../api/VehicleApi";
 import AppText from "../components/AppText";
 import AuthContext from "../auth/context";
 import defaultStyle from "../config/styles";
-import url from "../api/url";
+import { BASEURL } from "@env";
 import Screen from "../components/Screen";
 import ScanToastModal from "../components/modals/ScanToastModal";
 import Toast from "../components/toast/Toast";
@@ -144,7 +144,7 @@ function ScanScreen() {
               targetScreen: null,
               profile:
                 loginRes.user.profile !== null
-                  ? `${url.BASEURL}/${loginRes.user.profile}`
+                  ? `${BASEURL}/${loginRes.user.profile}`
                   : undefined,
             });
             setScanned(true);

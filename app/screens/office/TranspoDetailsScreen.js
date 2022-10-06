@@ -11,20 +11,20 @@ import {
   View,
 } from "react-native";
 
-import { transpoDetailsSchema } from "../config/schema";
-import { createTrip } from "../api/TripApi";
+import { transpoDetailsSchema } from "../../config/schema";
+import { createTrip } from "../../api/office/TripApi";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import AppText from "../components/AppText";
-import AppTextInput from "../components/AppTextInput";
-import AppFormField from "../components/forms/AppFormField";
-import ActivityIndicator from "../components/ActivityIndicator";
-import AuthContext from "../auth/context";
-import colors from "../config/colors";
-import fonts from "../config/fonts";
-import SubmitButton from "../components/forms/SubmitButton";
-import Screen from "../components/Screen";
-import Spacer from "../components/Spacer";
-import routes from "../navigation/routes";
+import AppText from "../../components/AppText";
+import AppTextInput from "../../components/AppTextInput";
+import AppFormField from "../../components/forms/AppFormField";
+import ActivityIndicator from "../../components/ActivityIndicator";
+import AuthContext from "../../auth/context";
+import colors from "../../config/colors";
+import fonts from "../../config/fonts";
+import SubmitButton from "../../components/forms/SubmitButton";
+import Screen from "../../components/Screen";
+import Spacer from "../../components/Spacer";
+import routes from "../../navigation/routes";
 
 function TranspoDetailsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);

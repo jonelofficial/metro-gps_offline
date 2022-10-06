@@ -1,7 +1,7 @@
 import * as Location from "expo-location";
 import { useContext, useEffect, useState } from "react";
 import { Dimensions } from "react-native";
-import { createLocation } from "../api/LocationsApi";
+import { createLocation } from "../api/office/LocationsApi";
 
 import AuthContext from "../auth/context";
 

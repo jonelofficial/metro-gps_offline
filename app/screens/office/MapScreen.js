@@ -16,25 +16,25 @@ import { useStopwatch } from "react-timer-hook";
 import { useForm } from "react-hook-form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { mapDoneSchema, mapGasSchema } from "../config/schema";
-import { updateTrip } from "../api/TripApi";
-import { getGasStation } from "../api/GasStationApi";
-import { gasCar } from "../api/DieselApi";
-import AppButton from "../components/AppButton";
-import AuthContext from "../auth/context";
-import ActivityIndicator from "../components/ActivityIndicator";
-import AppText from "../components/AppText";
-import cache from "../utility/cache";
+import { mapDoneSchema, mapGasSchema } from "../../config/schema";
+import { updateTrip } from "../../api/office/TripApi";
+import { getGasStation } from "../../api/GasStationApi";
+import { gasCar } from "../../api/office/DieselApi";
+import AppButton from "../../components/AppButton";
+import AuthContext from "../../auth/context";
+import ActivityIndicator from "../../components/ActivityIndicator";
+import AppText from "../../components/AppText";
+import cache from "../../utility/cache";
 
-import DoneModal from "../components/modals/DoneModal";
-import useInternetStatus from "../hooks/useInternetStatus";
-import Screen from "../components/Screen";
-import useLocation from "../hooks/useLocation";
-import Spacer from "../components/Spacer";
-import SuccessIndicator from "../components/SuccessIndicator";
-import colors from "../config/colors";
-import routes from "../navigation/routes";
-import GasModal from "../components/modals/GasModal";
+import DoneModal from "../../components/modals/DoneModal";
+import useInternetStatus from "../../hooks/useInternetStatus";
+import Screen from "../../components/Screen";
+import useLocation from "../../hooks/useLocation";
+import Spacer from "../../components/Spacer";
+import SuccessIndicator from "../../components/SuccessIndicator";
+import colors from "../../config/colors";
+import routes from "../../navigation/routes";
+import GasModal from "../../components/modals/GasModal";
 
 function MapScreen({ route, navigation }) {
   const [trip, setTrip] = useState();

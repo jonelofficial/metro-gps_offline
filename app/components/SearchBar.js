@@ -4,7 +4,7 @@ import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import dayjs from "dayjs";
 
-import { findTrip } from "../api/TripApi";
+import { findTrip } from "../api/office/TripApi";
 import defaultStyle from "../config/styles";
 import Fonts from "./Fonts";
 import fonts from "../config/fonts";

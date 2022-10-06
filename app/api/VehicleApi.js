@@ -1,6 +1,6 @@
-import url from "./url";
+import { BASEURL } from "@env";
 
-const baseUrl = `${url.BASEURL}/vehicle/car/user`;
+const baseUrl = `${BASEURL}/vehicle/car/user`;
 
 export const getVehicle = async (id, token) => {
   try {

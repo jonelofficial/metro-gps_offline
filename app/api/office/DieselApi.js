@@ -1,8 +1,9 @@
-import url from "./url";
+import { BASEURL } from "@env";
 
-const tripUrl = `${url.BASEURL}/api/feeds-deliveries`;
+const tripUrl = `${BASEURL}/office/diesel`;
 
-export const createFeedsDelivery = async (data, token) => {
+// Create diesel
+export const gasCar = async (data, token) => {
   try {
     const response = await fetch(tripUrl, {
       method: "POST",
@@ -15,6 +16,6 @@ export const createFeedsDelivery = async (data, token) => {
     const json = await response.json();
     return json;
   } catch (error) {
-    console.log("CREATE-FEEDS-DELIVERY API ERROR: ", error);
+    console.log("DIESEL CREATE API ERROR: ", error);
   }
 };

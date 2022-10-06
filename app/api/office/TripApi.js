@@ -1,10 +1,10 @@
-import url from "./url";
+import { BASEURL } from "@env";
 
-const tripUrl = `${url.BASEURL}/office/trips`;
+const tripUrl = `${BASEURL}/office/trips`;
 
 export const createTrip = async (form, token) => {
   try {
-    const response = await fetch(`${url.BASEURL}/office/trip`, {
+    const response = await fetch(`${BASEURL}/office/trip`, {
       method: "POST",
       headers: {
         // Accept: "application/json",
@@ -58,7 +58,7 @@ export const findTrip = async (token, trip_date, page) => {
 // USED
 export const updateTrip = async (id, data, token) => {
   try {
-    const response = await fetch(`${url.BASEURL}/office/trip/${id}`, {
+    const response = await fetch(`${BASEURL}/office/trip/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -89,23 +89,6 @@ export const updateTrip = async (id, data, token) => {
 
 
 */
-
-export const searchTripInfiniteScroll = async (token, trip_date, page) => {
-  try {
-    const response = await fetch(
-      `${tripUrl}?filters[user_id][$eq]=${user_id}&sort[id]=DESC&populate=${populate},locations,diesels&filters[trip_date][$gte]=${trip_date}T00:00:00&filters[trip_date][$lte]=${trip_date}T23:59:59&pagination[start]=${start}&pagination[limit]=25`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-    const json = await response.json();
-    return json;
-  } catch (error) {
-    console.log("SEARCH-TRIP API ERROR: ", error);
-  }
-};
 
 export const deleteTrip = async (id, token) => {
   try {
