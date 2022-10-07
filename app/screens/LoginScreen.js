@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -6,7 +6,6 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { loginSchema } from "../config/schema";
 import { useLogin } from "../api/LoginApi";
 import authStorage from "../auth/storage";
-import ActivityIndicator from "../components/ActivityIndicator";
 import AppHeading from "../components/AppHeading";
 import AppText from "../components/AppText";
 import AppFormField from "../components/forms/AppFormField";
@@ -18,11 +17,25 @@ import defaultStyle from "../config/styles";
 import fonts from "../config/fonts";
 import routes from "../navigation/routes";
 import useAuth from "../auth/useAuth";
+import SyncingIndicator from "../components/SyncingIndicator";
+import AuthContext from "../auth/context";
+import { ADMIN_TOKEN } from "@env";
+import { getVehicles } from "../api/VehicleApi";
 
 function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState();
   const [showPassword, setShowPassword] = useState(false);
   const { logIn } = useAuth();
+  const { selectTable, insertToTable, createTable } = useContext(AuthContext);
+
+  useEffect(() => {
+    (async () => {
+      await createTable(
+        "vehicles",
+        "id integer primary key not null, _id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter"
+      );
+    })();
+  }, []);
 
   const handleScan = () => {
     navigation.navigate(routes.SCAN);
@@ -37,22 +50,65 @@ function LoginScreen({ navigation }) {
 
   const onSubmit = async (user) => {
     try {
+      let vehicleCount;
       setLoading(true);
+
       const data = await useLogin(user);
       if (data.message) {
         setLoading(false);
         return alert(`${data.message}`);
       }
+
+      // Handle store and update vehicles master list to local storage
+      const vehicles = await getVehicles(ADMIN_TOKEN);
+      if (vehicles.data) {
+        try {
+          vehicleCount = vehicles.data.length;
+          const data = await selectTable("vehicles");
+
+          if (vehicleCount !== data.length) {
+            await vehicles.data.map((item) => {
+              let isDuplicate;
+              data._array.filter((vehicle) => {
+                if (vehicle._id === item._id) {
+                  isDuplicate = true;
+                }
+              });
+
+              !isDuplicate &&
+                insertToTable(
+                  "insert into vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
+                  [
+                    item._id,
+                    item.plate_no,
+                    item.vehicle_type,
+                    item.name,
+                    item.brand,
+                    item.fuel_type,
+                    item.km_per_liter,
+                  ]
+                );
+            });
+          }
+        } catch (error) {
+          console.log("SQLITE ERROR: ", error);
+        }
+      }
+      // End
+
+      // Handle store and update gas station master list to local storage
+      // End
+
       logIn(data);
       authStorage.storeToken(data);
       reset();
-      setLoading(false);
+      // setLoading(false);
     } catch (error) {
       console.log("LOGIN SCREEN ERROR:", error);
       setLoading(false);
     }
   };
-  if (loading) return <ActivityIndicator visible={true} />;
+  if (loading) return <SyncingIndicator visible={true} />;
 
   return (
     <Screen style={styles.screen}>

@@ -52,7 +52,7 @@ function ListItem({ onPress, item }) {
           >
             <AppText style={{ fontSize: 14, color: colors.success }}>{`#${
               item.user_id.trip_template === "office"
-                ? item._id.slice(0, 1 - 0) + "..."
+                ? item._id.slice(20)
                 : item.user_id.trip_template === "delivery"
                 ? item.attributes.delivery?.attributes.booking_number
                 : item.user_id.trip_template === "feeds_delivery"
