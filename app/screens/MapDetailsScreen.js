@@ -15,6 +15,7 @@ function MapDetailsScreen({ route }) {
   const [gasData, setGasData] = useState();
   const [gasStation, setGasStation] = useState([]);
   const [points, setPoints] = useState();
+  const [drag, setDrag] = useState(false);
 
   const map = useRef();
 
@@ -75,6 +76,7 @@ function MapDetailsScreen({ route }) {
           loadingEnabled={loading}
           loadingIndicatorColor={colors.primary}
           onMapReady={handleMapReady}
+          onPanDrag={() => setDrag(true)}
         >
           {points && (
             <Polyline
@@ -123,6 +125,24 @@ function MapDetailsScreen({ route }) {
               );
             })}
         </MapView>
+        {drag && (
+          <View
+            style={{
+              width: "100%",
+              position: "absolute",
+              alignItems: "center",
+              bottom: "50%",
+            }}
+          >
+            <Button
+              title="Fit on the map"
+              onPress={() => {
+                setDrag(false);
+                fitMap();
+              }}
+            />
+          </View>
+        )}
         {markerData || gasData ? (
           <View style={styles.dragWrapper}>
             <Button

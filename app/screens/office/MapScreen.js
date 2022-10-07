@@ -280,9 +280,11 @@ function MapScreen({ route, navigation }) {
   const userLocationChanged = (event) => {
     const newRegion = event.nativeEvent.coordinate;
 
+    console.log(newRegion);
+
     if (trip?.locations.length % 2 === 0) {
       null;
-    } else if (trip?.locations.length !== 0 && newRegion.speed >= 1.4) {
+    } else if (trip?.locations.length !== 0 && newRegion.speed >= 1) {
       setPoints((currentValue) => [
         ...currentValue,
         { latitude: newRegion.latitude, longitude: newRegion.longitude },

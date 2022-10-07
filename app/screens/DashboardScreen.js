@@ -30,6 +30,7 @@ import Spacer from "../components/Spacer";
 import { BASEURL } from "@env";
 
 import routes from "../navigation/routes";
+import SyncingIndicator from "../components/SyncingIndicator";
 
 function DashboardScreen({ navigation }) {
   const [text, setText] = useState();

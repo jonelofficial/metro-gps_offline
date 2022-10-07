@@ -8,16 +8,17 @@ import ViewFinder from "react-native-view-finder";
 import { useLogin } from "../api/LoginApi";
 import { vehicleIdSchema } from "../config/schema";
 import { getVehicle } from "../api/VehicleApi";
+import { BASEURL } from "@env";
 import AppText from "../components/AppText";
 import AuthContext from "../auth/context";
 import defaultStyle from "../config/styles";
-import { BASEURL } from "@env";
 import Screen from "../components/Screen";
 import ScanToastModal from "../components/modals/ScanToastModal";
 import Toast from "../components/toast/Toast";
+import useInternetStatus from "../hooks/useInternetStatus";
 
 function ScanScreen() {
-  const { user, token } = useContext(AuthContext);
+  const { user, token, offlineVehicles } = useContext(AuthContext);
   const [isModalVisible, setModalVisible] = useState(false);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
@@ -29,6 +30,9 @@ function ScanScreen() {
     targetScreen: null,
     profile: null,
   });
+
+  // Checking if have internet
+  const { noInternet, netInfo } = useInternetStatus();
 
   const { height } = Dimensions.get("screen");
 
@@ -43,6 +47,31 @@ function ScanScreen() {
       setModalVisible(false);
       setIsLoading(true);
 
+      if (noInternet) {
+        let isVehicle;
+        let index;
+        offlineVehicles.map((item, i) => {
+          if (item.plate_no === data.vehicle_id.toUpperCase()) {
+            isVehicle = true;
+            index = i;
+          }
+          return null;
+        });
+
+        if (isVehicle) {
+          setQrData({
+            vehicle_id: offlineVehicles[index].plate_no,
+            title: `${offlineVehicles[index].plate_no} ${offlineVehicles[index].brand}`,
+            description: offlineVehicles[index].vehicle_type,
+            targetScreen: "for validation only",
+            profile: offlineVehicles[index].profile || null,
+          });
+          return setScanned(true);
+        } else {
+          alert("No vehicle found");
+        }
+      }
+
       const vehicleRes = await getVehicle(data.vehicle_id.toUpperCase(), token);
 
       if (vehicleRes?.error) {
@@ -50,11 +79,10 @@ function ScanScreen() {
         setIsLoading(false);
         return setScanned(true);
       }
-
       setQrData({
         vehicle_id: vehicleRes.data[0].plate_no,
         title: `${vehicleRes.data[0].plate_no} ${vehicleRes.data[0].brand}`,
-        description: vehicleRes.data[0].name,
+        description: vehicleRes.data[0].vehicle_type,
         targetScreen: "for validation only",
         profile: null,
       });
@@ -105,6 +133,32 @@ function ScanScreen() {
       // USER LOGIN AND VEHICLE QR CODE IS VALID
       if (json.vehicle_id && user) {
         setIsLoading(true);
+
+        if (noInternet) {
+          let isVehicle;
+          let index;
+          offlineVehicles.map((item, i) => {
+            if (item.plate_no === json.vehicle_id.toUpperCase()) {
+              isVehicle = true;
+              index = i;
+            }
+            return null;
+          });
+
+          if (isVehicle) {
+            setQrData({
+              vehicle_id: offlineVehicles[index].plate_no,
+              title: `${offlineVehicles[index].plate_no} ${offlineVehicles[index].brand}`,
+              description: offlineVehicles[index].vehicle_type,
+              targetScreen: "for validation only",
+              profile: offlineVehicles[index].profile || null,
+            });
+            return setScanned(true);
+          } else {
+            alert("No vehicle found");
+          }
+        }
+
         const vehicleRes = await getVehicle(
           json.vehicle_id.toUpperCase(),
           token
@@ -119,9 +173,9 @@ function ScanScreen() {
         setQrData({
           vehicle_id: vehicleRes.data[0],
           title: `${vehicleRes.data[0].plate_no} ${vehicleRes.data[0].brand}`,
-          description: vehicleRes.data[0].name,
+          description: vehicleRes.data[0].vehicle_type,
           targetScreen: "for validation only",
-          profile: null,
+          profile: vehicleRes.data[0].profile || null,
         });
         setScanned(true);
 

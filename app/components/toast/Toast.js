@@ -85,15 +85,26 @@ function Toast({ scanned, showToast, data, setScanned, userData }) {
           <AppButton
             isLoading={!scanned}
             title={
-              scanned && data.targetScreen === null
+              data.targetScreen === null && data.description === null
+                ? "NO VEHICLE FOUND"
+                : scanned && data.targetScreen === null
                 ? "SIGN IN"
                 : scanned
                 ? "DRIVE"
                 : "LOADING..."
             }
             textStyle={styles.button}
-            disabled={!scanned}
-            color={scanned ? "primary" : "disablePrimary"}
+            disabled={
+              !scanned ||
+              (data.targetScreen === null && data.description === null)
+            }
+            color={
+              data.targetScreen === null && data.description === null
+                ? "disablePrimary"
+                : scanned
+                ? "primary"
+                : "disablePrimary"
+            }
             onPress={scanned ? handleOnPress : null}
           />
         </View>

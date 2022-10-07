@@ -5,10 +5,14 @@ import * as SplashScreen from "expo-splash-screen";
 import * as MediaLibrary from "expo-media-library";
 import * as Location from "expo-location";
 import jwtDecode from "jwt-decode";
+import * as SQLite from "expo-sqlite";
+import { ADMIN_TOKEN } from "@env";
 
 import { Alert, Linking, LogBox, ToastAndroid } from "react-native";
 import AuthContext from "../auth/context";
 import authStorage from "../auth/storage";
+import { getVehicles } from "../api/VehicleApi";
+import { getGasStation } from "../api/GasStationApi";
 
 LogBox.ignoreLogs(["exported from 'deprecated-react-native-prop-types'."]);
 
@@ -16,33 +20,87 @@ SplashScreen.preventAutoHideAsync();
 
 function AppContext({ children }) {
   useKeepAwake();
-
   const [isReady, setIsReady] = useState(false);
   const [user, setUser] = useState();
   const [token, setToken] = useState();
 
+  const [offlineVehicles, setOfflineVehicles] = useState();
+  const [offlineGasStations, setOfflineGasStations] = useState();
+  const [offlineTrips, setOfflineTrips] = useState({
+    trips: [],
+    locations: [],
+    diesels: [],
+  });
+
+  const [selectData, setSelectData] = useState();
+
+  const db = SQLite.openDatabase("db.db");
+
+  const createTable = async (tableName, fields) => {
+    db.transaction((tx) => {
+      tx.executeSql(`create table if not exists ${tableName} (${fields})`);
+    });
+  };
+
+  const selectTable = async (tableName) => {
+    await db.transaction((tx) => {
+      tx.executeSql(`select * from ${tableName}`, [], (_, { rows }) => {
+        setSelectData(rows);
+      });
+    });
+    return selectData;
+  };
+
+  const insertToTable = async (query, values) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        query,
+        values,
+        (transact, resultset) => console.log("Insert Success: ", resultset),
+        (transact, err) => console.log("Insert Error: ", err)
+      );
+    });
+  };
+
+  const deleteFromTable = async (tableName) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        `delete from ${tableName} where id=?`,
+        (transact, resultset) => console.log("DELETE Success: ", resultset),
+        (transact, err) => console.log("DELETE Error: ", err)
+      );
+    });
+  };
+
   useEffect(() => {
     ToastAndroid.show(`Welcome to Metro GPS`, ToastAndroid.SHORT);
     (async () => {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      const res = await MediaLibrary.requestPermissionsAsync();
-      const { granted } = await Location.requestForegroundPermissionsAsync();
-      if (status === "granted" && res.status === "granted" && granted) {
-        restoreUser();
-        watch_location();
-      } else {
-        Alert.alert(
-          "Request Permission",
-          `Please accept permission for ${
-            status === "denied" ? "CAMERA " : ""
-          }${res.status === "denied" ? "MEDIA LIBRARY " : ""}${
-            !granted ? "LOCATION" : ""
-          } to run the app.\n \nGo to phone setting > Application > Metro GPS > Permission or click OPEN PERMISSION then restart app. Thank you`,
-          [
-            { text: "OK", onPress: () => null, style: "cancel" },
-            { text: "OPEN PERMISSION", onPress: () => Linking.openSettings() },
-          ]
-        );
+      try {
+        const { status } = await Camera.requestCameraPermissionsAsync();
+        const res = await MediaLibrary.requestPermissionsAsync();
+        const { granted } = await Location.requestForegroundPermissionsAsync();
+        if (status === "granted" && res.status === "granted" && granted) {
+          restoreUser();
+          // watch_location();
+        } else {
+          Alert.alert(
+            "Request Permission",
+            `Please accept permission for ${
+              status === "denied" ? "CAMERA " : ""
+            }${res.status === "denied" ? "MEDIA LIBRARY " : ""}${
+              !granted ? "LOCATION" : ""
+            } to run the app.\n \nGo to phone setting > Application > Metro GPS > Permission or click OPEN PERMISSION then restart app. Thank you`,
+            [
+              { text: "OK", onPress: () => null, style: "cancel" },
+              {
+                text: "OPEN PERMISSION",
+                onPress: () => Linking.openSettings(),
+              },
+            ]
+          );
+        }
+      } catch (error) {
+        console.log("APP-CONTEXT ERROR: ", error);
       }
     })();
   }, []);
@@ -80,7 +138,23 @@ function AppContext({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, setUser, token, setToken }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        offlineVehicles,
+        offlineGasStations,
+        offlineTrips,
+        setUser,
+        setToken,
+        setOfflineTrips,
+        setOfflineVehicles,
+        setOfflineGasStations,
+        createTable,
+        selectTable,
+        insertToTable,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
