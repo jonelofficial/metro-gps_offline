@@ -73,6 +73,7 @@ function AppContext({ children }) {
     (async () => {
       ToastAndroid.show(`Welcome to Metro GPS`, ToastAndroid.SHORT);
       try {
+        console.log("test git merge");
         const { status } = await Camera.requestCameraPermissionsAsync();
         const res = await MediaLibrary.requestPermissionsAsync();
         const { granted } = await Location.requestForegroundPermissionsAsync();
