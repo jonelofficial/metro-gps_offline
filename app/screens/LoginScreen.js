@@ -26,7 +26,8 @@ function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState();
   const [showPassword, setShowPassword] = useState(false);
   const { logIn } = useAuth();
-  const { selectTable, insertToTable, createTable } = useContext(AuthContext);
+  const { selectTable, insertToTable, createTable, deleteFromTable } =
+    useContext(AuthContext);
 
   useEffect(() => {
     (async () => {
@@ -50,7 +51,6 @@ function LoginScreen({ navigation }) {
 
   const onSubmit = async (user) => {
     try {
-      let vehicleCount;
       setLoading(true);
 
       const data = await useLogin(user);
@@ -63,31 +63,52 @@ function LoginScreen({ navigation }) {
       const vehicles = await getVehicles(ADMIN_TOKEN);
       if (vehicles.data) {
         try {
+          let vehicleCount;
+          let count = 0;
           vehicleCount = vehicles.data.length;
           const data = await selectTable("vehicles");
+          console.log("Vehicles", data);
+
+          if (!data) {
+            await vehicles.data.map((item) => {
+              insertToTable(
+                "insert into vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
+                [
+                  item._id,
+                  item.plate_no,
+                  item.vehicle_type,
+                  item.name,
+                  item.brand,
+                  item.fuel_type,
+                  item.km_per_liter,
+                ]
+              );
+            });
+          }
 
           if (vehicleCount !== data.length) {
+            await deleteFromTable("vehicles");
             await vehicles.data.map((item) => {
-              let isDuplicate;
               data._array.filter((vehicle) => {
                 if (vehicle._id === item._id) {
-                  isDuplicate = true;
+                  return null;
+                } else {
+                  count = count + 1;
                 }
               });
 
-              !isDuplicate &&
-                insertToTable(
-                  "insert into vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
-                  [
-                    item._id,
-                    item.plate_no,
-                    item.vehicle_type,
-                    item.name,
-                    item.brand,
-                    item.fuel_type,
-                    item.km_per_liter,
-                  ]
-                );
+              insertToTable(
+                "insert into vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
+                [
+                  item._id,
+                  item.plate_no,
+                  item.vehicle_type,
+                  item.name,
+                  item.brand,
+                  item.fuel_type,
+                  item.km_per_liter,
+                ]
+              );
             });
           }
         } catch (error) {
