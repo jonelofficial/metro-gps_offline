@@ -6,13 +6,10 @@ import * as MediaLibrary from "expo-media-library";
 import * as Location from "expo-location";
 import jwtDecode from "jwt-decode";
 import * as SQLite from "expo-sqlite";
-import { ADMIN_TOKEN } from "@env";
 
 import { Alert, Linking, LogBox, ToastAndroid } from "react-native";
 import AuthContext from "../auth/context";
 import authStorage from "../auth/storage";
-import { getVehicles } from "../api/VehicleApi";
-import { getGasStation } from "../api/GasStationApi";
 
 LogBox.ignoreLogs(["exported from 'deprecated-react-native-prop-types'."]);
 
@@ -56,8 +53,8 @@ function AppContext({ children }) {
       tx.executeSql(
         query,
         values,
-        (transact, resultset) => console.log("Insert Success: ", resultset),
-        (transact, err) => console.log("Insert Error: ", err)
+        (transact, resultset) => console.log("INSERT Success: ", resultset),
+        (transact, err) => console.log("INSERT Error: ", err)
       );
     });
   };
@@ -65,7 +62,7 @@ function AppContext({ children }) {
   const deleteFromTable = async (tableName) => {
     db.transaction((tx) => {
       tx.executeSql(
-        `delete from ${tableName} where id=?`,
+        `delete from ${tableName}`,
         (transact, resultset) => console.log("DELETE Success: ", resultset),
         (transact, err) => console.log("DELETE Error: ", err)
       );
@@ -73,8 +70,8 @@ function AppContext({ children }) {
   };
 
   useEffect(() => {
-    ToastAndroid.show(`Welcome to Metro GPS`, ToastAndroid.SHORT);
     (async () => {
+      ToastAndroid.show(`Welcome to Metro GPS`, ToastAndroid.SHORT);
       try {
         const { status } = await Camera.requestCameraPermissionsAsync();
         const res = await MediaLibrary.requestPermissionsAsync();
@@ -153,6 +150,7 @@ function AppContext({ children }) {
         createTable,
         selectTable,
         insertToTable,
+        deleteFromTable,
       }}
     >
       {children}
