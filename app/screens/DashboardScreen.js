@@ -4,6 +4,7 @@ import {
   Animated,
   FlatList,
   StyleSheet,
+  ToastAndroid,
   TouchableOpacity,
   View,
 } from "react-native";
@@ -91,6 +92,8 @@ function DashboardScreen({ navigation }) {
   };
 
   useEffect(() => {
+    ToastAndroid.show(`Syncing`, ToastAndroid.SHORT);
+
     setImage(user.profile ? `${BASEURL}/${user.profile}` : null);
 
     // Handle if have an unsave trip from map screen
