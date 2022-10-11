@@ -1,6 +1,7 @@
 import { BASEURL } from "@env";
 
 const baseUrl = `${BASEURL}/vehicle/car/user`;
+// console.log("URL: ", baseUrl);
 
 export const getVehicle = async (id, token) => {
   try {
