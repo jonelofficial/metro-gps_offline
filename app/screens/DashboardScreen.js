@@ -32,6 +32,12 @@ import { BASEURL } from "@env";
 
 import routes from "../navigation/routes";
 import SyncingIndicator from "../components/SyncingIndicator";
+import {
+  createTable,
+  deleteFromTable,
+  insertToTable,
+  selectTable,
+} from "../utility/sqlite";
 
 function DashboardScreen({ navigation }) {
   const [text, setText] = useState();
@@ -49,7 +55,8 @@ function DashboardScreen({ navigation }) {
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
 
-  const { token, user, setUser, setToken } = useContext(AuthContext);
+  const { token, user, setUser, setToken, offlineVehicles } =
+    useContext(AuthContext);
 
   const fetchTrip = async () => {
     try {
@@ -99,6 +106,9 @@ function DashboardScreen({ navigation }) {
     // Handle if have an unsave trip from map screen
     (async () => {
       try {
+        console.log(await selectTable("vehicles"));
+        console.log(await selectTable("gas_station"));
+
         const tripCache = await cache.get(user.userId);
         if (tripCache === null) return handleRefresh();
 
@@ -109,6 +119,7 @@ function DashboardScreen({ navigation }) {
         handleRefresh();
       } catch (error) {
         alert("ERROR ON CACHE: ", error);
+        console.log(error);
       }
     })();
   }, []);

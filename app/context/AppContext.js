@@ -5,7 +5,6 @@ import * as SplashScreen from "expo-splash-screen";
 import * as MediaLibrary from "expo-media-library";
 import * as Location from "expo-location";
 import jwtDecode from "jwt-decode";
-import * as SQLite from "expo-sqlite";
 
 import { Alert, Linking, LogBox, ToastAndroid } from "react-native";
 import AuthContext from "../auth/context";
@@ -29,51 +28,10 @@ function AppContext({ children }) {
     diesels: [],
   });
 
-  const [selectData, setSelectData] = useState();
-
-  const db = SQLite.openDatabase("db.db");
-
-  const createTable = async (tableName, fields) => {
-    db.transaction((tx) => {
-      tx.executeSql(`create table if not exists ${tableName} (${fields})`);
-    });
-  };
-
-  const selectTable = async (tableName) => {
-    await db.transaction((tx) => {
-      tx.executeSql(`select * from ${tableName}`, [], (_, { rows }) => {
-        setSelectData(rows);
-      });
-    });
-    return selectData;
-  };
-
-  const insertToTable = async (query, values) => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        query,
-        values,
-        (transact, resultset) => console.log("INSERT Success: ", resultset),
-        (transact, err) => console.log("INSERT Error: ", err)
-      );
-    });
-  };
-
-  const deleteFromTable = async (tableName) => {
-    db.transaction((tx) => {
-      tx.executeSql(
-        `delete from ${tableName}`,
-        (transact, resultset) => console.log("DELETE Success: ", resultset),
-        (transact, err) => console.log("DELETE Error: ", err)
-      );
-    });
-  };
-
   useEffect(() => {
     (async () => {
       ToastAndroid.show(`Welcome to Metro GPS`, ToastAndroid.SHORT);
       try {
-        console.log("test git merge");
         const { status } = await Camera.requestCameraPermissionsAsync();
         const res = await MediaLibrary.requestPermissionsAsync();
         const { granted } = await Location.requestForegroundPermissionsAsync();
@@ -148,10 +106,6 @@ function AppContext({ children }) {
         setOfflineTrips,
         setOfflineVehicles,
         setOfflineGasStations,
-        createTable,
-        selectTable,
-        insertToTable,
-        deleteFromTable,
       }}
     >
       {children}

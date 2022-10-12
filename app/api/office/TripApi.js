@@ -1,6 +1,7 @@
 import { BASEURL } from "@env";
 
 const tripUrl = `${BASEURL}/office/trips`;
+// console.log("URL: ", tripUrl);
 
 export const createTrip = async (form, token) => {
   try {
