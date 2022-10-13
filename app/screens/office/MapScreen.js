@@ -22,16 +22,17 @@ import { getGasStation } from "../../api/GasStationApi";
 import { gasCar } from "../../api/office/DieselApi";
 import AppButton from "../../components/AppButton";
 import AuthContext from "../../auth/context";
-import ActivityIndicator from "../../components/ActivityIndicator";
+import ActivityIndicator from "../../components/indicator/ActivityIndicator";
 import AppText from "../../components/AppText";
 import cache from "../../utility/cache";
+import DrivingIndicator from "../../components/indicator/DrivingIndicator";
 
 import DoneModal from "../../components/modals/DoneModal";
 import useInternetStatus from "../../hooks/useInternetStatus";
 import Screen from "../../components/Screen";
 import useLocation from "../../hooks/useLocation";
 import Spacer from "../../components/Spacer";
-import SuccessIndicator from "../../components/SuccessIndicator";
+import SuccessIndicator from "../../components/indicator/SuccessIndicator";
 import colors from "../../config/colors";
 import routes from "../../navigation/routes";
 import GasModal from "../../components/modals/GasModal";
@@ -57,7 +58,8 @@ function MapScreen({ route, navigation }) {
   const [doneLoading, setDoneLoading] = useState(false);
 
   //Context
-  const { user, token } = useContext(AuthContext);
+  const { user, token, offlineTrips, setOfflineTrips, offlineGasStations } =
+    useContext(AuthContext);
 
   // Checking if have internet
   const { noInternet, netInfo } = useInternetStatus();
@@ -103,12 +105,29 @@ function MapScreen({ route, navigation }) {
   };
 
   useEffect(() => {
-    (async () => {
-      await fetchGasStation();
-      const trip_id = await route.params.trip._id;
-      setTrip(route.params.trip);
-      await handleLeftButton(trip_id);
-    })();
+    !noInternet
+      ? (async () => {
+          await fetchGasStation();
+          const trip_id = await route.params.trip._id;
+          setTrip(route.params.trip);
+          await handleLeftButton(trip_id);
+        })()
+      : (async () => {
+          try {
+            await fetchGasStation();
+            const leftData = await offlineHandleLeft();
+            const newObj = {
+              ...leftData,
+              id: offlineTrips.trips.length - 1,
+            };
+            setOfflineTrips((prevState) => ({
+              ...prevState,
+              locations: [...prevState.locations, newObj],
+            }));
+          } catch (error) {
+            alert(`USEEFFECT OFFLINE ERROR: ${error}`);
+          }
+        })();
   }, []);
 
   useEffect(() => {
@@ -120,14 +139,14 @@ function MapScreen({ route, navigation }) {
     return () => {
       subscription.remove();
     };
-  }, [trip]);
+  }, [trip, offlineTrips]);
 
   useEffect(() => {
     // HANDLE BACK
     BackHandler.addEventListener("hardwareBackPress", backAction);
     return () =>
       BackHandler.removeEventListener("hardwareBackPress", backAction);
-  }, [trip, netInfo]);
+  }, [trip, offlineTrips, netInfo]);
 
   // ACTIVITY INDICATOR FOR SHOWING SUCCESS ANIMATION
   const handleSuccess = () => {
@@ -156,14 +175,25 @@ function MapScreen({ route, navigation }) {
   const fetchGasStation = async () => {
     try {
       setItems([]);
-      const gasRes = await getGasStation(token);
-      setItems(
-        gasRes.data.map((item) => {
-          return { label: item.label, value: item._id };
-        })
-      );
+
+      if (noInternet) {
+        alert("GAS NO INTERNET");
+        setItems(
+          offlineGasStations.data.map((item) => {
+            return { label: item.label, value: item._id };
+          })
+        );
+      } else {
+        alert("GAS ONLINE");
+        const gasRes = await getGasStation(token);
+        setItems(
+          gasRes.data.map((item) => {
+            return { label: item.label, value: item._id };
+          })
+        );
+      }
     } catch (error) {
-      alert("ERROR gas: ", error);
+      alert(`ERROR gas: ${error}`);
     }
   };
 
@@ -271,6 +301,8 @@ function MapScreen({ route, navigation }) {
     setLeftLoading,
     setArrivedLoading,
     setCurrentLocation,
+    offlineHandleArrived,
+    offlineHandleLeft,
   } = useLocation();
 
   // MAP ANIMATION ON USER LOCATION CHANGED
@@ -280,11 +312,9 @@ function MapScreen({ route, navigation }) {
   const userLocationChanged = (event) => {
     const newRegion = event.nativeEvent.coordinate;
 
-    console.log(newRegion);
-
     if (trip?.locations.length % 2 === 0) {
       null;
-    } else if (trip?.locations.length !== 0 && newRegion.speed >= 1) {
+    } else if (trip?.locations.length !== 0 && newRegion.speed >= 1.4) {
       setPoints((currentValue) => [
         ...currentValue,
         { latitude: newRegion.latitude, longitude: newRegion.longitude },
@@ -339,57 +369,63 @@ function MapScreen({ route, navigation }) {
         {currentLocation && locationPermission ? (
           <>
             <View style={{ height: "50%" }}>
-              <MapView
-                style={styles.map}
-                moveOnMarkerPress={false}
-                showsUserLocation
-                showsMyLocationButton={false}
-                initialRegion={currentLocation}
-                onUserLocationChange={(event) => {
-                  userLocationChanged(event);
-                }}
-                ref={mapView}
-                onPanDrag={() => setDrag(true)}
-              >
-                <Polyline
-                  coordinates={points}
-                  strokeColor={colors.line}
-                  strokeWidth={3}
-                />
-                {trip?.locations.map((item, i) => {
-                  const markerTitle = i + 1;
-                  return (
-                    <Marker
-                      key={i}
-                      coordinate={{
-                        latitude: item.lat,
-                        longitude: item.long,
-                      }}
-                      pinColor={
-                        item.status === "left" ? colors.danger : colors.success
-                      }
-                      title={markerTitle.toString()}
-                    ></Marker>
-                  );
-                })}
-                {gas &&
-                  gas.map((gasItem, i) => {
-                    const gasTitle = i + 1;
+              {!noInternet ? (
+                <MapView
+                  style={styles.map}
+                  moveOnMarkerPress={false}
+                  showsUserLocation
+                  showsMyLocationButton={false}
+                  initialRegion={currentLocation}
+                  onUserLocationChange={(event) => {
+                    userLocationChanged(event);
+                  }}
+                  ref={mapView}
+                  onPanDrag={() => setDrag(true)}
+                >
+                  <Polyline
+                    coordinates={points}
+                    strokeColor={colors.line}
+                    strokeWidth={3}
+                  />
+                  {trip?.locations.map((item, i) => {
+                    const markerTitle = i + 1;
                     return (
                       <Marker
                         key={i}
                         coordinate={{
-                          latitude: gasItem.lat,
-                          longitude: gasItem.long,
+                          latitude: item.lat,
+                          longitude: item.long,
                         }}
-                        pinColor={colors.primary}
-                        title={gasTitle.toString()}
+                        pinColor={
+                          item.status === "left"
+                            ? colors.danger
+                            : colors.success
+                        }
+                        title={markerTitle.toString()}
                       ></Marker>
                     );
                   })}
-                {/* CAR IMAGE HERE */}
-              </MapView>
-              {drag && (
+                  {gas &&
+                    gas.map((gasItem, i) => {
+                      const gasTitle = i + 1;
+                      return (
+                        <Marker
+                          key={i}
+                          coordinate={{
+                            latitude: gasItem.lat,
+                            longitude: gasItem.long,
+                          }}
+                          pinColor={colors.primary}
+                          title={gasTitle.toString()}
+                        ></Marker>
+                      );
+                    })}
+                  {/* CAR IMAGE HERE */}
+                </MapView>
+              ) : (
+                <DrivingIndicator visible={true} />
+              )}
+              {drag && !noInternet && (
                 <View style={styles.dragWrapper}>
                   <Button
                     title="Track Location"
@@ -420,11 +456,13 @@ function MapScreen({ route, navigation }) {
                       ? "light"
                       : trip?.locations.length % 2 !== 0
                       ? "light"
-                      : noInternet
-                      ? "light"
                       : "danger"
                   }
-                  onPress={() => handleLeftButton(trip._id)}
+                  onPress={
+                    noInternet || offlineTrips
+                      ? () => offlineHandleArrived()
+                      : () => handleLeftButton(trip._id)
+                  }
                   isLoading={leftLoading}
                   disabled={
                     noInternet ||
@@ -441,11 +479,13 @@ function MapScreen({ route, navigation }) {
                       ? "light"
                       : trip?.locations.length % 2 === 0
                       ? "light"
-                      : noInternet
-                      ? "light"
                       : "success"
                   }
-                  onPress={handleArrivedButton}
+                  onPress={
+                    noInternet || offlineTrips
+                      ? () => offlineHandleArrived()
+                      : () => handleLeftButton()
+                  }
                   isLoading={arrivedLoading}
                   disabled={
                     noInternet ||
@@ -464,8 +504,6 @@ function MapScreen({ route, navigation }) {
                       backgroundColor: arrivedLoading
                         ? colors.light
                         : leftLoading
-                        ? colors.light
-                        : noInternet
                         ? colors.light
                         : colors.primary,
                     },
@@ -490,11 +528,13 @@ function MapScreen({ route, navigation }) {
                     ? "light"
                     : trip?.locations.length === 0
                     ? "light"
-                    : noInternet
-                    ? "light"
                     : "black"
                 }
-                onPress={() => setDoneModal(true)}
+                onPress={
+                  noInternet || offlineTrips
+                    ? () => null
+                    : () => setDoneModal(true)
+                }
                 disabled={
                   noInternet ||
                   trip?.locations.length % 2 !== 0 ||

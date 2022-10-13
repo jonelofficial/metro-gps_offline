@@ -17,7 +17,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import AppText from "../../components/AppText";
 import AppTextInput from "../../components/AppTextInput";
 import AppFormField from "../../components/forms/AppFormField";
-import ActivityIndicator from "../../components/ActivityIndicator";
+import ActivityIndicator from "../../components/indicator/ActivityIndicator";
 import AuthContext from "../../auth/context";
 import colors from "../../config/colors";
 import fonts from "../../config/fonts";
@@ -25,14 +25,19 @@ import SubmitButton from "../../components/forms/SubmitButton";
 import Screen from "../../components/Screen";
 import Spacer from "../../components/Spacer";
 import routes from "../../navigation/routes";
+import useInternetStatus from "../../hooks/useInternetStatus";
 
 function TranspoDetailsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState(null);
   const [vehicleInfo, setVehicleInfo] = useState(null);
-  const { user, token } = useContext(AuthContext);
+  const { user, token, setOfflineTrips, offlineTrips } =
+    useContext(AuthContext);
+
+  const { noInternet } = useInternetStatus();
 
   useEffect(() => {
+    console.log(offlineTrips);
     if (route.params?.image) {
       clearErrors("odometer_image_path");
       setValue("odometer_image_path", route.params.image);
@@ -59,6 +64,7 @@ function TranspoDetailsScreen({ navigation, route }) {
     try {
       Keyboard.dismiss();
       setLoading(true);
+      let tripData;
 
       const form = new FormData();
       form.append("image", {
@@ -70,20 +76,31 @@ function TranspoDetailsScreen({ navigation, route }) {
       form.append("odometer", data.odometer);
       form.append("companion", data.companion);
 
-      const res = await createTrip(form, token);
-      if (!res) {
-        setLoading(false);
-        return alert("No server response. Please try Again");
+      if (noInternet) {
+        setOfflineTrips((prevState) => ({
+          ...prevState,
+          trips: [...prevState.trips, form],
+        }));
+      } else {
+        const res = await createTrip(form, token);
+        tripData = res.data;
+        if (!res) {
+          setLoading(false);
+          return alert("No server response. Please try Again");
+        }
       }
       reset();
       setImageUri(null);
       setLoading(false);
-      navigation.navigate(routes.MAP, {
-        trip: res.data,
-      });
+
+      noInternet
+        ? navigation.navigate(routes.MAP)
+        : navigation.navigate(routes.MAP, {
+            trip: tripData,
+          });
     } catch (error) {
       setLoading(false);
-      console.log(error.toString());
+      alert(`ERROR: ${error}`);
     }
   };
 

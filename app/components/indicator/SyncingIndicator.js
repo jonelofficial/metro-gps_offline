@@ -7,7 +7,7 @@ function SyncingIndicator({ visible = false }) {
   return (
     <View style={styles.container}>
       <LottieView
-        source={require("../animations/syncing.json")}
+        source={require("../../animations/syncing.json")}
         autoPlay
         loop
         style={styles.animation}

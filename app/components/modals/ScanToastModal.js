@@ -26,7 +26,7 @@ const ScanToastModal = ({
           <View style={styles.close}>
             <TouchableOpacity
               onPress={() => {
-                setModalVisible(false), reset();
+                setModalVisible(false);
               }}
             >
               <Ionicons name="ios-close-outline" size={30} />

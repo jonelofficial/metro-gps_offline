@@ -1,18 +1,28 @@
-import React from "react";
+import React, { useContext } from "react";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 import Constants from "expo-constants";
 
 import AppText from "../components/AppText";
 import colors from "../config/colors";
 import useInternetStatus from "../hooks/useInternetStatus";
+import AuthContext from "../auth/context";
 
 function OfflineNotice(props) {
   const { noInternet } = useInternetStatus();
+  const { offlineTrips } = useContext(AuthContext);
   if (noInternet)
     return (
       <View style={styles.container}>
-        <ActivityIndicator color={colors.white} size="small" />
-        <AppText style={styles.text}>No Internet Connection</AppText>
+        {!offlineTrips ? (
+          <>
+            <ActivityIndicator color={colors.white} size="small" />
+            <AppText style={styles.text}>No Internet Connection</AppText>
+          </>
+        ) : (
+          <AppText style={styles.text}>
+            Finish this transaction before going back online
+          </AppText>
+        )}
       </View>
     );
   return null;
