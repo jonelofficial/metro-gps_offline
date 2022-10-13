@@ -100,6 +100,56 @@ export default useLocation = () => {
     }
   };
 
+  const offlineHandleArrived = async () => {
+    try {
+      const result = await Location.getCurrentPositionAsync({
+        enableHighAccuracy: true,
+        accuracy: Location.LocationAccuracy.BestForNavigation,
+      });
+
+      const res = await Location.reverseGeocodeAsync({
+        latitude: result.coords.latitude,
+        longitude: result.coords.longitude,
+      });
+
+      const data = {
+        lat: result.coords.latitude,
+        long: result.coords.longitude,
+        address: res,
+        status: "arrived",
+      };
+
+      return data;
+    } catch (error) {
+      console.log("OFFLINE HANDLE LEFT ERROR: ", error);
+    }
+  };
+
+  const offlineHandleLeft = async () => {
+    try {
+      const result = await Location.getCurrentPositionAsync({
+        enableHighAccuracy: true,
+        accuracy: Location.LocationAccuracy.BestForNavigation,
+      });
+
+      const res = await Location.reverseGeocodeAsync({
+        latitude: result.coords.latitude,
+        longitude: result.coords.longitude,
+      });
+
+      const data = {
+        lat: result.coords.latitude,
+        long: result.coords.longitude,
+        address: res,
+        status: "left",
+      };
+
+      return data;
+    } catch (error) {
+      console.log("OFFLINE HANDLE LEFT ERROR: ", error);
+    }
+  };
+
   useEffect(() => {
     // const loc = setInterval(() => {
     getLocation();
@@ -121,5 +171,7 @@ export default useLocation = () => {
     width,
     setCurrentLocation,
     locationPermission,
+    offlineHandleArrived,
+    offlineHandleLeft,
   };
 };

@@ -32,9 +32,9 @@ function ScanScreen() {
   });
 
   // Checking if have internet
-  const { noInternet, netInfo } = useInternetStatus();
+  const { noInternet } = useInternetStatus();
 
-  const { height } = Dimensions.get("screen");
+  const { height, width } = Dimensions.get("screen");
 
   const method = useForm({
     resolver: yupResolver(vehicleIdSchema),
@@ -66,29 +66,34 @@ function ScanScreen() {
             targetScreen: "for validation only",
             profile: offlineVehicles[index].profile || null,
           });
-          return setScanned(true);
+          setScanned(true);
         } else {
           alert("No vehicle found");
+          setIsLoading(false);
+          return setScanned(true);
         }
-      }
+      } else {
+        const vehicleRes = await getVehicle(
+          data.vehicle_id.toUpperCase(),
+          token
+        );
 
-      const vehicleRes = await getVehicle(data.vehicle_id.toUpperCase(), token);
-
-      if (vehicleRes?.error) {
-        alert(vehicleRes.error);
-        setIsLoading(false);
-        return setScanned(true);
+        if (vehicleRes?.error) {
+          alert(vehicleRes.error);
+          setIsLoading(false);
+          return setScanned(true);
+        }
+        setQrData({
+          vehicle_id: vehicleRes.data[0].plate_no,
+          title: `${vehicleRes.data[0].plate_no} ${vehicleRes.data[0].brand}`,
+          description: vehicleRes.data[0].vehicle_type,
+          targetScreen: "for validation only",
+          profile: null,
+        });
+        setScanned(true);
       }
-      setQrData({
-        vehicle_id: vehicleRes.data[0].plate_no,
-        title: `${vehicleRes.data[0].plate_no} ${vehicleRes.data[0].brand}`,
-        description: vehicleRes.data[0].vehicle_type,
-        targetScreen: "for validation only",
-        profile: null,
-      });
-      setScanned(true);
     } catch (error) {
-      alert("ERROR: ", error);
+      alert(`ERROR: ${error}`);
     }
   };
 
@@ -153,31 +158,32 @@ function ScanScreen() {
               targetScreen: "for validation only",
               profile: offlineVehicles[index].profile || null,
             });
-            return setScanned(true);
+            setScanned(true);
           } else {
+            setIsLoading(false);
             alert("No vehicle found");
           }
+        } else {
+          const vehicleRes = await getVehicle(
+            json.vehicle_id.toUpperCase(),
+            token
+          );
+
+          if (vehicleRes?.error) {
+            alert(vehicleRes.error);
+            setIsLoading(false);
+            return setScanned(true);
+          }
+
+          setQrData({
+            vehicle_id: vehicleRes.data[0],
+            title: `${vehicleRes.data[0].plate_no} ${vehicleRes.data[0].brand}`,
+            description: vehicleRes.data[0].vehicle_type,
+            targetScreen: "for validation only",
+            profile: vehicleRes.data[0].profile || null,
+          });
+          setScanned(true);
         }
-
-        const vehicleRes = await getVehicle(
-          json.vehicle_id.toUpperCase(),
-          token
-        );
-
-        if (vehicleRes?.error) {
-          alert(vehicleRes.error);
-          setIsLoading(false);
-          return setScanned(true);
-        }
-
-        setQrData({
-          vehicle_id: vehicleRes.data[0],
-          title: `${vehicleRes.data[0].plate_no} ${vehicleRes.data[0].brand}`,
-          description: vehicleRes.data[0].vehicle_type,
-          targetScreen: "for validation only",
-          profile: vehicleRes.data[0].profile || null,
-        });
-        setScanned(true);
 
         // NOT LOGIN
       } else if (!user) {
@@ -228,7 +234,8 @@ function ScanScreen() {
       setIsLoading(false);
       setScanned(true);
       alert("Sorry, can't read the QR code or QR code not valid.");
-      console.log("SCAN ERROR: ", e);
+      console.log(`SCAN ERROR: ${e}`);
+      alert(`SCAN ERROR: ${e}`);
     }
   };
 
@@ -254,13 +261,17 @@ function ScanScreen() {
   return (
     <>
       <Screen style={styles.screen}>
-        <View style={styles.container}>
+        <View style={[styles.container]}>
           <BarCodeScanner
+            // type={"front"}
             onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
             ratio="16:9"
             style={[
               StyleSheet.absoluteFillObject,
-              { width: "170%", height: height },
+              {
+                width: width * 1.8,
+                height: height * 1.1,
+              },
             ]}
           />
 

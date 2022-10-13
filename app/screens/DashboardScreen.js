@@ -31,7 +31,6 @@ import Spacer from "../components/Spacer";
 import { BASEURL } from "@env";
 
 import routes from "../navigation/routes";
-import SyncingIndicator from "../components/SyncingIndicator";
 import {
   createTable,
   deleteFromTable,
@@ -51,6 +50,8 @@ function DashboardScreen({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const [page, setPage] = useState(1);
   const [tripDate, setTripDate] = useState();
+
+  const { setOfflineVehicles, setOfflineGasStations } = useContext(AuthContext);
 
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
@@ -106,8 +107,10 @@ function DashboardScreen({ navigation }) {
     // Handle if have an unsave trip from map screen
     (async () => {
       try {
-        console.log(await selectTable("vehicles"));
-        console.log(await selectTable("gas_station"));
+        setOfflineGasStations([]);
+        setOfflineVehicles([]);
+        setOfflineVehicles(await selectTable("vehicles"));
+        setOfflineGasStations(await selectTable("gas_station"));
 
         const tripCache = await cache.get(user.userId);
         if (tripCache === null) return handleRefresh();

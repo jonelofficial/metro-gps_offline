@@ -1,4 +1,4 @@
-import { Camera } from "expo-camera";
+import { Camera, CameraType } from "expo-camera";
 import * as MediaLibrary from "expo-media-library";
 import React, { useEffect, useState } from "react";
 import { Image, StyleSheet, TouchableOpacity, View } from "react-native";
@@ -78,8 +78,9 @@ function AppCamera({ navigation, route, style }) {
           <Camera
             ref={(ref) => setCamera(ref)}
             flashMode={flash === 1 ? "off" : flash}
-            style={styles.camera}
-            type={type}
+            style={[styles.camera, { backgroundColor: "red" }]}
+            // type={type}
+            type={CameraType.back}
             ratio="16:9"
           >
             <View style={styles.buttonContainer}>

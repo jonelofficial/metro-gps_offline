@@ -2,12 +2,12 @@ import React from "react";
 import LottieView from "lottie-react-native";
 import { StyleSheet, View } from "react-native";
 
-function SuccessIndicator({ visible = false }) {
+function ActivityIndicator({ visible = false }) {
   if (!visible) return null;
   return (
     <View style={styles.container}>
       <LottieView
-        source={require("../animations/success.json")}
+        source={require("../../animations/loader.json")}
         autoPlay
         loop
         style={styles.animation}
@@ -17,7 +17,7 @@ function SuccessIndicator({ visible = false }) {
 }
 const styles = StyleSheet.create({
   animation: {
-    width: 100,
+    width: 200,
   },
   container: {
     justifyContent: "center",
@@ -28,4 +28,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default SuccessIndicator;
+export default ActivityIndicator;

@@ -50,7 +50,13 @@ function ListItem({ onPress, item }) {
               borderColor: colors.success,
             }}
           >
-            <AppText style={{ fontSize: 14, color: colors.success }}>{`#${
+            <AppText
+              style={{
+                fontSize: 14,
+                color: colors.success,
+                marginHorizontal: 5,
+              }}
+            >{`#${
               item.user_id.trip_template === "office"
                 ? item._id.slice(20)
                 : item.user_id.trip_template === "delivery"

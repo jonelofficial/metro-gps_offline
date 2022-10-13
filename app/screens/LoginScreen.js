@@ -17,7 +17,7 @@ import defaultStyle from "../config/styles";
 import fonts from "../config/fonts";
 import routes from "../navigation/routes";
 import useAuth from "../auth/useAuth";
-import SyncingIndicator from "../components/SyncingIndicator";
+import SyncingIndicator from "../components/indicator/SyncingIndicator";
 import AuthContext from "../auth/context";
 import { ADMIN_TOKEN } from "@env";
 import { getVehicles } from "../api/VehicleApi";
@@ -39,11 +39,11 @@ function LoginScreen({ navigation }) {
     (async () => {
       await createTable(
         "vehicles",
-        "id integer primary key not null, _id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter"
+        "id integer primary key not null, _id TEXT, plate_no TEXT, vehicle_type TEXT, name TEXT,brand TEXT, fuel_type TEXT, km_per_liter INTEGER"
       );
       await createTable(
         "gas_station",
-        "id integer primary key not null, _id, label"
+        "id integer primary key not null, _id TEXT, label TEXT"
       );
     })();
   }, []);
@@ -64,7 +64,7 @@ function LoginScreen({ navigation }) {
       setLoading(true);
 
       const data = await useLogin(user);
-      if (data.message) {
+      if (data?.message) {
         setLoading(false);
         return alert(`${data.message}`);
       }
@@ -80,7 +80,7 @@ function LoginScreen({ navigation }) {
           if (data._array.length === 0) {
             await vehicles.data.map(async (item) => {
               await insertToTable(
-                "insert into vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
+                "INSERT INTO vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
                 [
                   item._id,
                   item.plate_no,
@@ -96,7 +96,7 @@ function LoginScreen({ navigation }) {
             await deleteFromTable("vehicles");
             await vehicles.data.map(async (item) => {
               await insertToTable(
-                "insert into vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
+                "INSERT INTO vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
                 [
                   item._id,
                   item.plate_no,
@@ -124,17 +124,17 @@ function LoginScreen({ navigation }) {
           stationCount = gasStation.data.length;
           const data = await selectTable("gas_station");
           if (data._array.length === 0) {
-            await vehicles.data.map(async (item) => {
+            await gasStation.data.map(async (item) => {
               await insertToTable(
-                "insert into gas_station (_id, label) values (?,?)",
+                "INSERT INTO gas_station (_id, label) values (?,?)",
                 [item._id, item.label]
               );
             });
-          } else if (vehicleCount !== data._array.length) {
+          } else if (stationCount !== data._array.length) {
             await deleteFromTable("gas_station");
-            await vehicles.data.map(async (item) => {
+            await gasStation.data.map(async (item) => {
               await insertToTable(
-                "insert into gas_station (_id,label) values (?,?)",
+                "INSERT INTO gas_station (_id,label) values (?,?)",
                 [item._id, item.label]
               );
             });
@@ -149,7 +149,7 @@ function LoginScreen({ navigation }) {
       authStorage.storeToken(data);
       reset();
 
-      setLoading(false);
+      // setLoading(false);
     } catch (error) {
       console.log("LOGIN SCREEN ERROR:", error);
       setLoading(false);

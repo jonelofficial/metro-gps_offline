@@ -2,12 +2,12 @@ import React from "react";
 import LottieView from "lottie-react-native";
 import { StyleSheet, View } from "react-native";
 
-function ActivityIndicator({ visible = false }) {
+function DrivingIndicator({ visible = false }) {
   if (!visible) return null;
   return (
     <View style={styles.container}>
       <LottieView
-        source={require("../animations/loader.json")}
+        source={require("../../animations/driving.json")}
         autoPlay
         loop
         style={styles.animation}
@@ -17,7 +17,7 @@ function ActivityIndicator({ visible = false }) {
 }
 const styles = StyleSheet.create({
   animation: {
-    width: 200,
+    width: 250,
   },
   container: {
     justifyContent: "center",
@@ -28,4 +28,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ActivityIndicator;
+export default DrivingIndicator;
