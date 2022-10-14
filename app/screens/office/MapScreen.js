@@ -28,7 +28,6 @@ import cache from "../../utility/cache";
 import DrivingIndicator from "../../components/indicator/DrivingIndicator";
 
 import DoneModal from "../../components/modals/DoneModal";
-import useInternetStatus from "../../hooks/useInternetStatus";
 import Screen from "../../components/Screen";
 import useLocation from "../../hooks/useLocation";
 import Spacer from "../../components/Spacer";
@@ -58,11 +57,33 @@ function MapScreen({ route, navigation }) {
   const [doneLoading, setDoneLoading] = useState(false);
 
   //Context
-  const { user, token, offlineTrips, setOfflineTrips, offlineGasStations } =
-    useContext(AuthContext);
+  const {
+    user,
+    token,
+    offlineTrips,
+    setOfflineTrips,
+    offlineGasStations,
+    noInternet,
+    netInfo,
+    currentLocation,
+    setCurrentLocation,
+  } = useContext(AuthContext);
 
-  // Checking if have internet
-  const { noInternet, netInfo } = useInternetStatus();
+  // GPS
+  const {
+    // currentLocation,
+    // setCurrentLocation,
+
+    arrivedLoading,
+    leftLoading,
+    locationPermission,
+    handleArrived,
+    handleLeft,
+    setLeftLoading,
+    setArrivedLoading,
+    offlineHandleArrived,
+    offlineHandleLeft,
+  } = useLocation();
 
   // TIMER
   const { seconds, minutes, hours } = useStopwatch({ autoStart: true });
@@ -94,7 +115,10 @@ function MapScreen({ route, navigation }) {
         onPress: noInternet
           ? () => BackHandler.exitApp()
           : async () => {
-              if (trip?.locations.length % 2 !== 0) {
+              if (
+                trip?.locations.length % 2 !== 0 &&
+                (!noInternet || !offlineTrips.trips.length > 0)
+              ) {
                 await handleArrivedButton();
               }
               setDoneModal(true);
@@ -105,29 +129,21 @@ function MapScreen({ route, navigation }) {
   };
 
   useEffect(() => {
-    !noInternet
-      ? (async () => {
+    (async () => {
+      if (!noInternet) {
+        await fetchGasStation();
+        const trip_id = await route.params.trip._id;
+        setTrip(route.params.trip);
+        await handleLeftButton(trip_id);
+      } else {
+        try {
           await fetchGasStation();
-          const trip_id = await route.params.trip._id;
-          setTrip(route.params.trip);
-          await handleLeftButton(trip_id);
-        })()
-      : (async () => {
-          try {
-            await fetchGasStation();
-            const leftData = await offlineHandleLeft();
-            const newObj = {
-              ...leftData,
-              id: offlineTrips.trips.length - 1,
-            };
-            setOfflineTrips((prevState) => ({
-              ...prevState,
-              locations: [...prevState.locations, newObj],
-            }));
-          } catch (error) {
-            alert(`USEEFFECT OFFLINE ERROR: ${error}`);
-          }
-        })();
+          await handleOfflineLeft();
+        } catch (error) {
+          alert(`USEEFFECT OFFLINE ERROR: ${error}`);
+        }
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -140,6 +156,18 @@ function MapScreen({ route, navigation }) {
       subscription.remove();
     };
   }, [trip, offlineTrips]);
+
+  useEffect(() => {
+    if (currentLocation && currentLocation.speed >= 1.4) {
+      setPoints((currentValue) => [
+        ...currentValue,
+        {
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+        },
+      ]);
+    }
+  }, [currentLocation]);
 
   useEffect(() => {
     // HANDLE BACK
@@ -177,14 +205,12 @@ function MapScreen({ route, navigation }) {
       setItems([]);
 
       if (noInternet) {
-        alert("GAS NO INTERNET");
         setItems(
-          offlineGasStations.data.map((item) => {
+          offlineGasStations.map((item) => {
             return { label: item.label, value: item._id };
           })
         );
       } else {
-        alert("GAS ONLINE");
         const gasRes = await getGasStation(token);
         setItems(
           gasRes.data.map((item) => {
@@ -239,6 +265,36 @@ function MapScreen({ route, navigation }) {
     }
   };
 
+  const handleOfflineLeft = async () => {
+    setLeftLoading(true);
+    const leftData = await offlineHandleLeft();
+    const newObj = {
+      ...leftData,
+      id: offlineTrips.trips.length - 1,
+    };
+    setOfflineTrips((prevState) => ({
+      ...prevState,
+      locations: [...prevState.locations, newObj],
+    }));
+    setLeftLoading(false);
+    handleSuccess();
+  };
+
+  const handleOfflineArrived = async () => {
+    setArrivedLoading(true);
+    const arrivedData = await offlineHandleArrived();
+    const newObj = {
+      ...arrivedData,
+      id: offlineTrips.trips.length - 1,
+    };
+    setOfflineTrips((prevState) => ({
+      ...prevState,
+      locations: [...prevState.locations, newObj],
+    }));
+    setArrivedLoading(false);
+    handleSuccess();
+  };
+
   // HANDLE GAS BUTTON, ADD GAS DETAILS AND LATLONG ON THE TRIP TRANSACTION
   const handleGasSubmit = async (data) => {
     try {
@@ -269,6 +325,28 @@ function MapScreen({ route, navigation }) {
     }
   };
 
+  const handleOfflineGas = async (data) => {
+    Keyboard.dismiss();
+    setGasLoading(true);
+
+    const newObj = {
+      ...data,
+      id: offlineTrips.trips.length - 1,
+      lat: currentLocation.latitude,
+      long: currentLocation.longitude,
+    };
+    setOfflineTrips((prevState) => ({
+      ...prevState,
+      diesels: [...prevState.locations, newObj],
+    }));
+
+    reset();
+    setValue(null);
+    setModalVisible(false);
+    setGasLoading(false);
+    handleSuccess();
+  };
+
   // END THE TRIP TRANSACTION WITH DONE ODOMETER AND LAST POINTS ROUTE
   const handleDoneButton = async (vehicle_data) => {
     try {
@@ -290,50 +368,31 @@ function MapScreen({ route, navigation }) {
     }
   };
 
-  // GPS
-  const {
-    currentLocation,
-    arrivedLoading,
-    leftLoading,
-    locationPermission,
-    handleArrived,
-    handleLeft,
-    setLeftLoading,
-    setArrivedLoading,
-    setCurrentLocation,
-    offlineHandleArrived,
-    offlineHandleLeft,
-  } = useLocation();
+  const handleOfflineDone = async (vehicle_data) => {
+    Keyboard.dismiss();
+    setDoneLoading(true);
+    const newObj = {
+      odometer_done: vehicle_data.odometer_done,
+      points: points,
+    };
 
-  // MAP ANIMATION ON USER LOCATION CHANGED
+    setOfflineTrips((prevState) => ({
+      ...prevState,
+      trips: prevState.trips.map((item) => {
+        item.id === offlineTrips.trips.length ? { ...item, ...newObj } : item;
+      }),
+    }));
+    setDoneLoading(false);
+    await AsyncStorage.removeItem("cache" + user.userId);
+    navigation.replace(routes.DASHBOARD);
+  };
+
+  // MAP ANIMATION ON USER LOCATION CHANGEDs
 
   const mapView = createRef();
 
   const userLocationChanged = (event) => {
     const newRegion = event.nativeEvent.coordinate;
-
-    if (trip?.locations.length % 2 === 0) {
-      null;
-    } else if (trip?.locations.length !== 0 && newRegion.speed >= 1.4) {
-      setPoints((currentValue) => [
-        ...currentValue,
-        { latitude: newRegion.latitude, longitude: newRegion.longitude },
-      ]);
-    }
-
-    if (noInternet) {
-      const newTripObj = {
-        dataObj: {
-          data: {
-            locations: locationId,
-            odometer_done: "-1",
-            points: points,
-          },
-        },
-        id: trip?._id,
-      };
-      cache.store(user.userId, newTripObj);
-    }
 
     setCurrentLocation({
       ...currentLocation,
@@ -356,6 +415,7 @@ function MapScreen({ route, navigation }) {
     );
   };
 
+  // console.log("OFFLINE DATA: ", offlineTrips, "/n ONLINE DATA: ", trip);
   return (
     <>
       <Screen>
@@ -420,6 +480,39 @@ function MapScreen({ route, navigation }) {
                         ></Marker>
                       );
                     })}
+                  {/* OFFLINE MARKERS */}
+                  {offlineTrips?.locations.map((item, i) => {
+                    const markerTitle = i + 1;
+                    return (
+                      <Marker
+                        key={i}
+                        coordinate={{
+                          latitude: item.lat,
+                          longitude: item.long,
+                        }}
+                        pinColor={
+                          item.status === "left"
+                            ? colors.danger
+                            : colors.success
+                        }
+                        title={markerTitle.toString()}
+                      ></Marker>
+                    );
+                  })}
+                  {offlineTrips?.diesels.map((gasItem, i) => {
+                    const gasTitle = i + 1;
+                    return (
+                      <Marker
+                        key={i}
+                        coordinate={{
+                          latitude: gasItem.lat,
+                          longitude: gasItem.long,
+                        }}
+                        pinColor={colors.primary}
+                        title={gasTitle.toString()}
+                      ></Marker>
+                    );
+                  })}
                   {/* CAR IMAGE HERE */}
                 </MapView>
               ) : (
@@ -454,20 +547,26 @@ function MapScreen({ route, navigation }) {
                   color={
                     leftLoading
                       ? "light"
-                      : trip?.locations.length % 2 !== 0
+                      : trip?.locations.length % 2 !== 0 &&
+                        trip?.locations.length > 0
+                      ? "light"
+                      : offlineTrips?.locations.length % 2 !== 0 &&
+                        offlineTrips?.locations.length > 0
                       ? "light"
                       : "danger"
                   }
                   onPress={
-                    noInternet || offlineTrips
-                      ? () => offlineHandleArrived()
+                    noInternet || offlineTrips.trips.length > 0
+                      ? () => handleOfflineLeft()
                       : () => handleLeftButton(trip._id)
                   }
                   isLoading={leftLoading}
                   disabled={
-                    noInternet ||
                     leftLoading ||
-                    trip?.locations.length % 2 !== 0
+                    (trip?.locations.length % 2 !== 0 &&
+                      trip?.locations.length > 0) ||
+                    (offlineTrips?.locations.length % 2 !== 0 &&
+                      offlineTrips?.locations.length > 0)
                   }
                 />
                 <View style={{ width: "4%" }}></View>
@@ -477,20 +576,26 @@ function MapScreen({ route, navigation }) {
                   color={
                     arrivedLoading
                       ? "light"
-                      : trip?.locations.length % 2 === 0
+                      : trip?.locations.length % 2 === 0 &&
+                        trip?.locations.length > 0
+                      ? "light"
+                      : offlineTrips?.locations.length % 2 === 0 &&
+                        offlineTrips?.locations.length > 0
                       ? "light"
                       : "success"
                   }
                   onPress={
-                    noInternet || offlineTrips
-                      ? () => offlineHandleArrived()
-                      : () => handleLeftButton()
+                    noInternet || offlineTrips.trips.length > 0
+                      ? () => handleOfflineArrived()
+                      : () => handleArrivedButton()
                   }
                   isLoading={arrivedLoading}
                   disabled={
-                    noInternet ||
                     arrivedLoading ||
-                    trip?.locations.length % 2 === 0
+                    (trip?.locations.length % 2 === 0 &&
+                      trip?.locations.length > 0) ||
+                    (offlineTrips?.locations.length % 2 === 0 &&
+                      offlineTrips?.locations.length > 0)
                   }
                 />
               </View>
@@ -501,14 +606,13 @@ function MapScreen({ route, navigation }) {
                   style={[
                     styles.gas,
                     {
-                      backgroundColor: arrivedLoading
-                        ? colors.light
-                        : leftLoading
-                        ? colors.light
-                        : colors.primary,
+                      backgroundColor:
+                        arrivedLoading || leftLoading
+                          ? colors.light
+                          : colors.primary,
                     },
                   ]}
-                  disabled={noInternet || arrivedLoading || leftLoading}
+                  disabled={arrivedLoading || leftLoading}
                 >
                   <MaterialCommunityIcons
                     name="gas-station"
@@ -524,21 +628,28 @@ function MapScreen({ route, navigation }) {
                 title="Done"
                 style={styles.btnDone}
                 color={
-                  trip?.locations.length % 2 !== 0
+                  trip?.locations.length % 2 !== 0 && trip?.locations.length > 0
                     ? "light"
-                    : trip?.locations.length === 0
+                    : trip?.locations.length === 0 && trip?.locations.length > 0
+                    ? "light"
+                    : offlineTrips?.locations.length % 2 !== 0 &&
+                      offlineTrips?.locations.length > 0
+                    ? "light"
+                    : offlineTrips?.locations.length === 0 &&
+                      offlineTrips?.locations.length > 0
                     ? "light"
                     : "black"
                 }
-                onPress={
-                  noInternet || offlineTrips
-                    ? () => null
-                    : () => setDoneModal(true)
-                }
+                onPress={() => setDoneModal(true)}
                 disabled={
-                  noInternet ||
-                  trip?.locations.length % 2 !== 0 ||
-                  trip?.locations.length === 0 ||
+                  (trip?.locations.length % 2 !== 0 &&
+                    trip?.locations.length > 0) ||
+                  (trip?.locations.length === 0 &&
+                    trip?.locations.length > 0) ||
+                  (offlineTrips?.locations.length % 2 !== 0 &&
+                    offlineTrips?.locations.length > 0) ||
+                  (offlineTrips?.locations.length === 0 &&
+                    offlineTrips?.locations.length > 0) ||
                   arrivedLoading ||
                   leftLoading
                 }
@@ -565,7 +676,11 @@ function MapScreen({ route, navigation }) {
         value={value}
         open={open}
         method={method}
-        onSubmit={handleGasSubmit}
+        onSubmit={
+          noInternet || offlineTrips.trips.length > 0
+            ? handleOfflineGas
+            : handleGasSubmit
+        }
         loading={gasLoading}
       />
 
@@ -574,7 +689,11 @@ function MapScreen({ route, navigation }) {
         doneModal={doneModal}
         setDoneModal={setDoneModal}
         methodDone={methodDone}
-        handleDoneButton={handleDoneButton}
+        handleDoneButton={
+          noInternet || offlineTrips.trips.length > 0
+            ? handleOfflineDone
+            : handleDoneButton
+        }
         doneLoading={doneLoading}
       />
     </>
