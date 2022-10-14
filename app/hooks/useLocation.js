@@ -32,6 +32,7 @@ export default useLocation = () => {
         accuracy: Location.LocationAccuracy.BestForNavigation,
       });
       setCurrentLocation({
+        speed: result.coords.speed,
         latitude: result.coords.latitude,
         longitude: result.coords.longitude,
         latitudeDelta: LATITUDE_DELTA,

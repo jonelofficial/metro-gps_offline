@@ -25,16 +25,13 @@ import SubmitButton from "../../components/forms/SubmitButton";
 import Screen from "../../components/Screen";
 import Spacer from "../../components/Spacer";
 import routes from "../../navigation/routes";
-import useInternetStatus from "../../hooks/useInternetStatus";
 
 function TranspoDetailsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState(null);
   const [vehicleInfo, setVehicleInfo] = useState(null);
-  const { user, token, setOfflineTrips, offlineTrips } =
+  const { user, token, setOfflineTrips, offlineTrips, noInternet } =
     useContext(AuthContext);
-
-  const { noInternet } = useInternetStatus();
 
   useEffect(() => {
     console.log(offlineTrips);
@@ -67,19 +64,26 @@ function TranspoDetailsScreen({ navigation, route }) {
       let tripData;
 
       const form = new FormData();
-      form.append("image", {
-        name: new Date() + "_odometer",
-        uri: data.odometer_image_path.uri,
-        type: "image/jpg",
-      });
+      // form.append("image", {
+      //   name: new Date() + "_odometer",
+      //   uri: data.odometer_image_path.uri,
+      //   type: "image/jpg",
+      // });
       form.append("vehicle_id", vehicleInfo.vehicle_id._id);
       form.append("odometer", data.odometer);
       form.append("companion", data.companion);
 
       if (noInternet) {
+        const newObj = {
+          id: offlineTrips.trips.length,
+          image_path: data.odometer_image_path.uri,
+          vehicle_id: vehicleInfo.vehicle_id._id,
+          odometer: data.odometer,
+          companion: data.companion,
+        };
         setOfflineTrips((prevState) => ({
           ...prevState,
-          trips: [...prevState.trips, form],
+          trips: [...prevState.trips, newObj],
         }));
       } else {
         const res = await createTrip(form, token);

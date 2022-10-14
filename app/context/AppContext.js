@@ -6,9 +6,10 @@ import * as MediaLibrary from "expo-media-library";
 import * as Location from "expo-location";
 import jwtDecode from "jwt-decode";
 
-import { Alert, Linking, LogBox, ToastAndroid } from "react-native";
+import { Alert, Dimensions, Linking, LogBox, ToastAndroid } from "react-native";
 import AuthContext from "../auth/context";
 import authStorage from "../auth/storage";
+import { useNetInfo } from "@react-native-community/netinfo";
 
 LogBox.ignoreLogs(["exported from 'deprecated-react-native-prop-types'."]);
 
@@ -16,9 +17,12 @@ SplashScreen.preventAutoHideAsync();
 
 function AppContext({ children }) {
   useKeepAwake();
+  const netInfo = useNetInfo();
+  const [noInternet, setInternet] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [user, setUser] = useState();
   const [token, setToken] = useState();
+  const [currentLocation, setCurrentLocation] = useState();
 
   const [offlineVehicles, setOfflineVehicles] = useState();
   const [offlineGasStations, setOfflineGasStations] = useState();
@@ -27,6 +31,18 @@ function AppContext({ children }) {
     locations: [],
     diesels: [],
   });
+
+  const { width, height } = Dimensions.get("window");
+  const ASPECT_RATIO = width / height;
+  const LATITUDE_DELTA = 0.0001; // 0.009
+  const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
+
+  useEffect(() => {
+    if (netInfo.type !== "unknown" && netInfo.isInternetReachable === false) {
+      return setInternet(true);
+    }
+    setInternet(false);
+  }, [netInfo]);
 
   useEffect(() => {
     (async () => {
@@ -37,7 +53,7 @@ function AppContext({ children }) {
         const { granted } = await Location.requestForegroundPermissionsAsync();
         if (status === "granted" && res.status === "granted" && granted) {
           restoreUser();
-          // watch_location();
+          watch_location();
         } else {
           Alert.alert(
             "Request Permission",
@@ -62,13 +78,22 @@ function AppContext({ children }) {
   }, []);
 
   const watch_location = async () => {
-    let location = await Location.watchPositionAsync(
+    await Location.watchPositionAsync(
       {
         enableHighAccuracy: true,
         accuracy: Location.LocationAccuracy.BestForNavigation,
       },
-      (location_update) => {
-        // console.log("update location!", location_update.coords);
+      (result) => {
+        setCurrentLocation(
+          // result
+          {
+            speed: result.coords.speed,
+            latitude: result.coords.latitude,
+            longitude: result.coords.longitude,
+            latitudeDelta: LATITUDE_DELTA,
+            longitudeDelta: LONGITUDE_DELTA,
+          }
+        );
       }
     );
   };
@@ -106,6 +131,9 @@ function AppContext({ children }) {
         setOfflineTrips,
         setOfflineVehicles,
         setOfflineGasStations,
+        noInternet,
+        currentLocation,
+        setCurrentLocation,
       }}
     >
       {children}

@@ -15,10 +15,8 @@ import defaultStyle from "../config/styles";
 import Screen from "../components/Screen";
 import ScanToastModal from "../components/modals/ScanToastModal";
 import Toast from "../components/toast/Toast";
-import useInternetStatus from "../hooks/useInternetStatus";
 
 function ScanScreen() {
-  const { user, token, offlineVehicles } = useContext(AuthContext);
   const [isModalVisible, setModalVisible] = useState(false);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
@@ -30,9 +28,7 @@ function ScanScreen() {
     targetScreen: null,
     profile: null,
   });
-
-  // Checking if have internet
-  const { noInternet } = useInternetStatus();
+  const { user, token, offlineVehicles, noInternet } = useContext(AuthContext);
 
   const { height, width } = Dimensions.get("screen");
 

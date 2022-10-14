@@ -4,25 +4,15 @@ import Constants from "expo-constants";
 
 import AppText from "../components/AppText";
 import colors from "../config/colors";
-import useInternetStatus from "../hooks/useInternetStatus";
 import AuthContext from "../auth/context";
 
 function OfflineNotice(props) {
-  const { noInternet } = useInternetStatus();
-  const { offlineTrips } = useContext(AuthContext);
+  const { noInternet } = useContext(AuthContext);
   if (noInternet)
     return (
       <View style={styles.container}>
-        {!offlineTrips ? (
-          <>
-            <ActivityIndicator color={colors.white} size="small" />
-            <AppText style={styles.text}>No Internet Connection</AppText>
-          </>
-        ) : (
-          <AppText style={styles.text}>
-            Finish this transaction before going back online
-          </AppText>
-        )}
+        <ActivityIndicator color={colors.white} size="small" />
+        <AppText style={styles.text}>No Internet Connection</AppText>
       </View>
     );
   return null;

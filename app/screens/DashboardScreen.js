@@ -56,8 +56,7 @@ function DashboardScreen({ navigation }) {
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
 
-  const { token, user, setUser, setToken, offlineVehicles } =
-    useContext(AuthContext);
+  const { token, user, setUser, setToken } = useContext(AuthContext);
 
   const fetchTrip = async () => {
     try {
@@ -103,7 +102,6 @@ function DashboardScreen({ navigation }) {
     ToastAndroid.show(`Syncing`, ToastAndroid.SHORT);
 
     setImage(user.profile ? `${BASEURL}/${user.profile}` : null);
-
     // Handle if have an unsave trip from map screen
     (async () => {
       try {
