@@ -34,7 +34,6 @@ function TranspoDetailsScreen({ navigation, route }) {
     useContext(AuthContext);
 
   useEffect(() => {
-    console.log(offlineTrips);
     if (route.params?.image) {
       clearErrors("odometer_image_path");
       setValue("odometer_image_path", route.params.image);
@@ -66,7 +65,7 @@ function TranspoDetailsScreen({ navigation, route }) {
       const form = new FormData();
       // form.append("image", {
       //   name: new Date() + "_odometer",
-      //   uri: data.odometer_image_path.uri,
+      //   uri: data.odometer_image_path?.uri,
       //   type: "image/jpg",
       // });
       form.append("vehicle_id", vehicleInfo.vehicle_id._id);
@@ -87,6 +86,7 @@ function TranspoDetailsScreen({ navigation, route }) {
         }));
       } else {
         const res = await createTrip(form, token);
+        console.log(res);
         tripData = res.data;
         if (!res) {
           setLoading(false);
@@ -183,6 +183,8 @@ function TranspoDetailsScreen({ navigation, route }) {
             <Spacer />
             <SubmitButton
               title={user.trip_template === "office" ? "Drive" : "Next"}
+              color={noInternet ? "light" : "primary"}
+              disabled={noInternet}
             />
           </FormProvider>
         </Screen>

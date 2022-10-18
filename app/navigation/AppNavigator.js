@@ -22,6 +22,8 @@ const AppNavigator = () => (
       name="MapView"
       component={MapDetailsScreen}
       options={{
+        // headerShown: true,
+        title: "Details",
         animation: "slide_from_bottom",
       }}
     />

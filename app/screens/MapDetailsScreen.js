@@ -19,7 +19,7 @@ function MapDetailsScreen({ route }) {
 
   const map = useRef();
 
-  const { token } = useContext(AuthContext);
+  const { token, user } = useContext(AuthContext);
   const { item } = route.params;
 
   const latlong = item.locations;
@@ -230,24 +230,21 @@ function MapDetailsScreen({ route }) {
           >
             {!markerData && !gasData ? (
               <>
-                {item.trip_type === "delivery" ||
-                item.trip_type === "hauling" ? undefined : (
+                {user.trip_template === "delivery" ||
+                user.trip_template === "hauling" ? undefined : (
                   <AppText
                     style={{
                       textTransform: "capitalize",
                     }}
                   >
-                    Trip Type:{" "}
-                    {item.trip_type === "feeds_delivery"
-                      ? "feeds delivery"
-                      : item.trip_type}
+                    Trip Type: {user.trip_template}
                   </AppText>
                 )}
                 <AppText>
                   Trip Date:{" "}
                   {dayjs(item.trip_date).format("YYYY-MM-DD | hh:mm A")}
                 </AppText>
-                {item.trip_type === "hauling" ? undefined : (
+                {user.trip_template === "hauling" ? undefined : (
                   <AppText>Total Location: {latlong.length}</AppText>
                 )}
                 <AppText>Total Gas: {item.diesels.length}</AppText>
@@ -349,6 +346,7 @@ const styles = StyleSheet.create({
     width: "100%",
     alignItems: "center",
     padding: 15,
+    top: 0,
   },
   dragWrapper: {
     width: "100%",

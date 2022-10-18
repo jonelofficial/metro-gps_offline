@@ -26,6 +26,7 @@ function SearchBar({
   const [date, setDate] = useState(new Date());
 
   const onDateSelected = async (event, value) => {
+    console.log(event);
     setLoading(true);
     setDatePicker(false);
     setNoData(false);

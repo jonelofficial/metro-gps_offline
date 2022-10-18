@@ -71,9 +71,6 @@ function MapScreen({ route, navigation }) {
 
   // GPS
   const {
-    // currentLocation,
-    // setCurrentLocation,
-
     arrivedLoading,
     leftLoading,
     locationPermission,
@@ -116,8 +113,9 @@ function MapScreen({ route, navigation }) {
           ? () => BackHandler.exitApp()
           : async () => {
               if (
-                trip?.locations.length % 2 !== 0 &&
-                (!noInternet || !offlineTrips.trips.length > 0)
+                !noInternet &&
+                trip?.locations.length % 2 !== 0
+                // (!noInternet || !offlineTrips.trips.length > 0)
               ) {
                 await handleArrivedButton();
               }
@@ -190,7 +188,7 @@ function MapScreen({ route, navigation }) {
       const newTripObj = {
         dataObj: {
           locations: locationId,
-          odometer_done: "-1",
+          odometer_done: -1,
           points: points,
         },
         id: trip?._id,
@@ -426,7 +424,7 @@ function MapScreen({ route, navigation }) {
             >{`Accept Location Permission\n and try again.`}</AppText>
           </View>
         )}
-        {currentLocation && locationPermission ? (
+        {currentLocation && locationPermission && trip?.locations.length > 0 ? (
           <>
             <View style={{ height: "50%" }}>
               {!noInternet ? (
@@ -553,6 +551,8 @@ function MapScreen({ route, navigation }) {
                       : offlineTrips?.locations.length % 2 !== 0 &&
                         offlineTrips?.locations.length > 0
                       ? "light"
+                      : noInternet
+                      ? "light"
                       : "danger"
                   }
                   onPress={
@@ -566,7 +566,8 @@ function MapScreen({ route, navigation }) {
                     (trip?.locations.length % 2 !== 0 &&
                       trip?.locations.length > 0) ||
                     (offlineTrips?.locations.length % 2 !== 0 &&
-                      offlineTrips?.locations.length > 0)
+                      offlineTrips?.locations.length > 0) ||
+                    noInternet
                   }
                 />
                 <View style={{ width: "4%" }}></View>
@@ -582,6 +583,8 @@ function MapScreen({ route, navigation }) {
                       : offlineTrips?.locations.length % 2 === 0 &&
                         offlineTrips?.locations.length > 0
                       ? "light"
+                      : noInternet
+                      ? "light"
                       : "success"
                   }
                   onPress={
@@ -595,7 +598,8 @@ function MapScreen({ route, navigation }) {
                     (trip?.locations.length % 2 === 0 &&
                       trip?.locations.length > 0) ||
                     (offlineTrips?.locations.length % 2 === 0 &&
-                      offlineTrips?.locations.length > 0)
+                      offlineTrips?.locations.length > 0) ||
+                    noInternet
                   }
                 />
               </View>
@@ -609,10 +613,12 @@ function MapScreen({ route, navigation }) {
                       backgroundColor:
                         arrivedLoading || leftLoading
                           ? colors.light
+                          : noInternet
+                          ? colors.light
                           : colors.primary,
                     },
                   ]}
-                  disabled={arrivedLoading || leftLoading}
+                  disabled={arrivedLoading || leftLoading || noInternet}
                 >
                   <MaterialCommunityIcons
                     name="gas-station"
@@ -638,6 +644,12 @@ function MapScreen({ route, navigation }) {
                     : offlineTrips?.locations.length === 0 &&
                       offlineTrips?.locations.length > 0
                     ? "light"
+                    : noInternet
+                    ? "light"
+                    : leftLoading
+                    ? "light"
+                    : arrivedLoading
+                    ? "light"
                     : "black"
                 }
                 onPress={() => setDoneModal(true)}
@@ -651,7 +663,8 @@ function MapScreen({ route, navigation }) {
                   (offlineTrips?.locations.length === 0 &&
                     offlineTrips?.locations.length > 0) ||
                   arrivedLoading ||
-                  leftLoading
+                  leftLoading ||
+                  noInternet
                 }
               />
             </View>
