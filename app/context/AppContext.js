@@ -9,6 +9,7 @@ import jwtDecode from "jwt-decode";
 import { Alert, Dimensions, Linking, LogBox, ToastAndroid } from "react-native";
 import AuthContext from "../auth/context";
 import authStorage from "../auth/storage";
+import { createTable, deleteFromTable } from "../utility/sqlite";
 import { useNetInfo } from "@react-native-community/netinfo";
 
 LogBox.ignoreLogs(["exported from 'deprecated-react-native-prop-types'."]);
@@ -43,6 +44,16 @@ function AppContext({ children }) {
     }
     setInternet(false);
   }, [netInfo]);
+
+  useEffect(() => {
+    (async () => {
+      // await createTable(
+      //   "trips",
+      //   "id interger primary key not null, user_id TEXT, vehicle_id TEXT, locations BLOB, diesels BLOB, odometer INTEGER , odometer_image_path TEXT, companion TEXT , points BLOB, trip_date TEXT"
+      // );
+      // await deleteFromTable("trips");
+    })();
+  }, []);
 
   useEffect(() => {
     (async () => {

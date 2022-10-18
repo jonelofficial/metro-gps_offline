@@ -31,12 +31,7 @@ import Spacer from "../components/Spacer";
 import { BASEURL } from "@env";
 
 import routes from "../navigation/routes";
-import {
-  createTable,
-  deleteFromTable,
-  insertToTable,
-  selectTable,
-} from "../utility/sqlite";
+import { insertToTable, selectTable } from "../utility/sqlite";
 
 function DashboardScreen({ navigation }) {
   const [text, setText] = useState();
@@ -51,7 +46,8 @@ function DashboardScreen({ navigation }) {
   const [page, setPage] = useState(1);
   const [tripDate, setTripDate] = useState();
 
-  const { setOfflineVehicles, setOfflineGasStations } = useContext(AuthContext);
+  const { setOfflineVehicles, setOfflineGasStations, offlineVehicles } =
+    useContext(AuthContext);
 
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
@@ -247,7 +243,11 @@ function DashboardScreen({ navigation }) {
         <Card
           image={image && { uri: image }}
           name={`${user.first_name} ${user.last_name}`}
-          onPress={toggleModal}
+          onPress={
+            loading
+              ? () => alert("Please wait the loading to be done.")
+              : toggleModal
+          }
         />
         <SearchBar
           setData={setData}

@@ -1,5 +1,12 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Button, StyleSheet, View, Dimensions, Alert } from "react-native";
+import {
+  Button,
+  StyleSheet,
+  View,
+  Dimensions,
+  Alert,
+  StatusBar,
+} from "react-native";
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
@@ -15,6 +22,8 @@ import defaultStyle from "../config/styles";
 import Screen from "../components/Screen";
 import ScanToastModal from "../components/modals/ScanToastModal";
 import Toast from "../components/toast/Toast";
+import { CameraType } from "expo-camera";
+import { selectTable } from "../utility/sqlite";
 
 function ScanScreen() {
   const [isModalVisible, setModalVisible] = useState(false);
@@ -29,7 +38,6 @@ function ScanScreen() {
     profile: null,
   });
   const { user, token, offlineVehicles, noInternet } = useContext(AuthContext);
-
   const { height, width } = Dimensions.get("screen");
 
   const method = useForm({
@@ -97,6 +105,7 @@ function ScanScreen() {
     (async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
       setHasPermission(status === "granted");
+      // console.log(await selectTable("trips"));
     })();
   }, []);
 
@@ -229,8 +238,7 @@ function ScanScreen() {
     } catch (e) {
       setIsLoading(false);
       setScanned(true);
-      alert("Sorry, can't read the QR code or QR code not valid.");
-      console.log(`SCAN ERROR: ${e}`);
+      alert("Sorry, can't read the QR code.\nPlease use manual instead.");
       alert(`SCAN ERROR: ${e}`);
     }
   };
@@ -257,9 +265,20 @@ function ScanScreen() {
   return (
     <>
       <Screen style={styles.screen}>
+        <View
+          style={{
+            display: scanned || isModalVisible ? "none" : "flex",
+            position: "absolute",
+            width: "100%",
+            zIndex: 999,
+            top: StatusBar.currentHeight,
+          }}
+        >
+          <Button title="Manual" onPress={() => setModalVisible(true)} />
+        </View>
+
         <View style={[styles.container]}>
           <BarCodeScanner
-            // type={"front"}
             onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
             ratio="16:9"
             style={[

@@ -43,3 +43,15 @@ export const createTable = async (tableName, fields) => {
       (transact, err) => console.log(err);
   });
 };
+
+export const showTable = async () => {
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        "SELECT name FROM sqlite_schema WHERE type ='table'",
+        (transact, resultset) => resolve(resultset),
+        (transact, err) => reject(err)
+      );
+    });
+  });
+};

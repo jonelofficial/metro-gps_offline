@@ -77,7 +77,8 @@ function LoginScreen({ navigation }) {
           let vehicleCount;
           vehicleCount = vehicles.data.length;
           const data = await selectTable("vehicles");
-          if (data._array.length === 0) {
+          console.log(data);
+          if (data.length === 0) {
             await vehicles.data.map(async (item) => {
               await insertToTable(
                 "INSERT INTO vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
@@ -92,7 +93,7 @@ function LoginScreen({ navigation }) {
                 ]
               );
             });
-          } else if (vehicleCount !== data._array.length) {
+          } else if (vehicleCount !== data.length) {
             await deleteFromTable("vehicles");
             await vehicles.data.map(async (item) => {
               await insertToTable(
@@ -123,14 +124,14 @@ function LoginScreen({ navigation }) {
           let stationCount;
           stationCount = gasStation.data.length;
           const data = await selectTable("gas_station");
-          if (data._array.length === 0) {
+          if (data.length === 0) {
             await gasStation.data.map(async (item) => {
               await insertToTable(
                 "INSERT INTO gas_station (_id, label) values (?,?)",
                 [item._id, item.label]
               );
             });
-          } else if (stationCount !== data._array.length) {
+          } else if (stationCount !== data.length) {
             await deleteFromTable("gas_station");
             await gasStation.data.map(async (item) => {
               await insertToTable(
