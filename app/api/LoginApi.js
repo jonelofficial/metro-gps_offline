@@ -1,7 +1,7 @@
-import { BASEURL } from "@env";
+// import { BASEURL } from "@env";
 
-const baseUrl = `${BASEURL}/auth/login`;
-// console.log("URL: ", baseUrl);
+const baseUrl = `${process.env.BASEURL}/auth/login`;
+console.log("URL: ", baseUrl);
 
 export const useLogin = async (user) => {
   try {

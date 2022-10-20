@@ -19,7 +19,7 @@ import routes from "../navigation/routes";
 import useAuth from "../auth/useAuth";
 import SyncingIndicator from "../components/indicator/SyncingIndicator";
 import AuthContext from "../auth/context";
-import { ADMIN_TOKEN } from "@env";
+// import { ADMIN_TOKEN } from "@env";
 import { getVehicles } from "../api/VehicleApi";
 import {
   createTable,
@@ -69,7 +69,7 @@ function LoginScreen({ navigation }) {
         return alert(`${data.message}`);
       }
 
-      const vehicles = await getVehicles(ADMIN_TOKEN);
+      const vehicles = await getVehicles(process.env.ADMIN_TOKEN);
 
       if (vehicles.data) {
         // Handle store and update vehicles master list to local storage
@@ -77,7 +77,6 @@ function LoginScreen({ navigation }) {
           let vehicleCount;
           vehicleCount = vehicles.data.length;
           const data = await selectTable("vehicles");
-          console.log(data);
           if (data.length === 0) {
             await vehicles.data.map(async (item) => {
               await insertToTable(
@@ -116,7 +115,7 @@ function LoginScreen({ navigation }) {
         // End
       }
 
-      const gasStation = await getGasStation(ADMIN_TOKEN);
+      const gasStation = await getGasStation(process.env.ADMIN_TOKEN);
 
       if (gasStation.data) {
         // Handle store and update gas station master list to local storage

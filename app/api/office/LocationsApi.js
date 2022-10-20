@@ -1,6 +1,6 @@
-import { BASEURL } from "@env";
+// import { BASEURL } from "@env";
 
-const tripUrl = `${BASEURL}/office/location`;
+const tripUrl = `${process.env.BASEURL}/office/location`;
 // console.log("URL: ", tripUrl);
 
 export const createLocation = async (data, token) => {

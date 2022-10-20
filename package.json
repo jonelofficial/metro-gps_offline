@@ -19,6 +19,7 @@
     "@react-navigation/native": "^6.0.10",
     "@react-navigation/native-stack": "^6.6.2",
     "dayjs": "^1.11.4",
+    "dotenv": "^16.0.3",
     "expo": "~45.0.0",
     "expo-application": "~4.1.0",
     "expo-barcode-scanner": "~11.3.0",
