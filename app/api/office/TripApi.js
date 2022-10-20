@@ -1,11 +1,11 @@
-import { BASEURL } from "@env";
+// import { BASEURL } from "@env";
 
-const tripUrl = `${BASEURL}/office/trips`;
+const tripUrl = `${process.env.BASEURL}/office/trips`;
 // console.log("URL: ", tripUrl);
 
 export const createTrip = async (form, token) => {
   try {
-    const response = await fetch(`${BASEURL}/office/trip`, {
+    const response = await fetch(`${process.env.BASEURL}/office/trip`, {
       method: "POST",
       headers: {
         // Accept: "application/json",
@@ -59,7 +59,7 @@ export const findTrip = async (token, trip_date, page) => {
 // USED
 export const updateTrip = async (id, data, token) => {
   try {
-    const response = await fetch(`${BASEURL}/office/trip/${id}`, {
+    const response = await fetch(`${process.env.BASEURL}/office/trip/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

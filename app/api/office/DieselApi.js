@@ -1,6 +1,6 @@
-import { BASEURL } from "@env";
+// import { BASEURL } from "@env";
 
-const tripUrl = `${BASEURL}/office/diesel`;
+const tripUrl = `${process.env.BASEURL}/office/diesel`;
 // console.log("URL: ", tripUrl);
 
 // Create diesel
