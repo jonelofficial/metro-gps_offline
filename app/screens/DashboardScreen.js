@@ -31,7 +31,7 @@ import Spacer from "../components/Spacer";
 import { BASEURL } from "@env";
 
 import routes from "../navigation/routes";
-import { insertToTable, selectTable } from "../utility/sqlite";
+import { selectTable } from "../utility/sqlite";
 
 function DashboardScreen({ navigation }) {
   const [text, setText] = useState();
@@ -106,7 +106,7 @@ function DashboardScreen({ navigation }) {
         setOfflineGasStations(await selectTable("gas_station"));
 
         const tripCache = await cache.get(user.userId);
-        if (tripCache === null) return handleRefresh();
+        if (tripCache === null) return await handleRefresh();
 
         setLoading(true);
 
