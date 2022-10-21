@@ -5,11 +5,13 @@ import dayjs from "dayjs";
 
 import { getGasStation } from "../api/GasStationApi";
 import AppText from "../components/AppText";
+import AppButton from "../components/AppButton";
 import AuthContext from "../auth/context";
 import colors from "../config/colors";
 import Screen from "../components/Screen";
+import routes from "../navigation/routes";
 
-function MapDetailsScreen({ route }) {
+function MapDetailsScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [markerData, setMarkerData] = useState();
   const [gasData, setGasData] = useState();
@@ -28,6 +30,12 @@ function MapDetailsScreen({ route }) {
     fetchGasStation();
     setPoints(item.points);
   }, []);
+
+  const handleResumeTrip = async () => {
+    navigation.navigate(routes.MAP, {
+      trip: item,
+    });
+  };
 
   const fetchGasStation = async () => {
     try {
@@ -164,14 +172,7 @@ function MapDetailsScreen({ route }) {
                   color: colors.danger,
                 }}
               >
-                This trip is not done. Please report the reason
-              </AppText>
-              <AppText
-                style={{
-                  color: colors.danger,
-                }}
-              >
-                for this to your supervisor.
+                This trip is not done.
               </AppText>
             </View>
           )
@@ -218,11 +219,15 @@ function MapDetailsScreen({ route }) {
          * TRIP DETAILS
          *
          */}
-        <View>
+        <View
+          style={{
+            justifyContent: "space-between",
+            height: "90%",
+          }}
+        >
           <View
             style={{
               backgroundColor: colors.light,
-              height: "90%",
               margin: 10,
               padding: 10,
               borderRadius: 10,
@@ -265,9 +270,33 @@ function MapDetailsScreen({ route }) {
                   "YYYY-MM-DD | hh:mm A"
                 )}`}</AppText>
                 <AppText>
-                  Location:{" "}
+                  Region:{" "}
+                  {markerData.address[0]?.region
+                    ? markerData.address[0].region
+                    : "Unknown"}
+                </AppText>
+                <AppText>
+                  City:{" "}
                   {markerData.address[0]?.city
                     ? markerData.address[0].city
+                    : "Unknown"}
+                </AppText>
+                <AppText>
+                  Street:{" "}
+                  {markerData.address[0]?.street
+                    ? markerData.address[0].street
+                    : "Unknown"}
+                </AppText>
+                <AppText>
+                  District:{" "}
+                  {markerData.address[0]?.district
+                    ? markerData.address[0].district
+                    : "Unknown"}
+                </AppText>
+                <AppText>
+                  Name:{" "}
+                  {markerData.address[0]?.name
+                    ? markerData.address[0].name
                     : "Unknown"}
                 </AppText>
               </>
@@ -293,6 +322,15 @@ function MapDetailsScreen({ route }) {
               </>
             )}
           </View>
+          {(item?.odometer_done < 0 || item?.odometer_done === null) && (
+            <View style={{ margin: 10 }}>
+              <AppButton
+                title="RESUME"
+                color="success"
+                onPress={handleResumeTrip}
+              />
+            </View>
+          )}
         </View>
       </View>
     </Screen>

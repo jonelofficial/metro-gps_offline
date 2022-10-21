@@ -37,7 +37,12 @@ function ListItem({ onPress, item }) {
   return (
     <TouchableOpacity onPress={onPress}>
       <Fonts>
-        <View style={styles.container}>
+        <View
+          style={[
+            styles.container,
+            { backgroundColor: item.odometer_done <= 0 && colors.danger },
+          ]}
+        >
           <View
             style={{
               justifyContent: "center",
@@ -47,13 +52,14 @@ function ListItem({ onPress, item }) {
               padding: 2.5,
               borderWidth: 1,
               borderRadius: 5,
-              borderColor: colors.success,
+              borderColor:
+                item.odometer_done <= 0 ? colors.light4 : colors.success,
             }}
           >
             <AppText
               style={{
                 fontSize: 14,
-                color: colors.success,
+                color: item.odometer_done <= 0 ? colors.light4 : colors.success,
                 marginHorizontal: 5,
               }}
             >{`#${
@@ -69,14 +75,24 @@ function ListItem({ onPress, item }) {
           </View>
           {/*  */}
           <View style={styles.kmDetails}>
-            <AppText style={styles.km}>
+            <AppText
+              style={[
+                styles.km,
+                { color: item.odometer_done <= 0 && colors.light4 },
+              ]}
+            >
               {meter < 1000 ? meter : km.toFixed(0)} {meter < 1000 ? "m" : "km"}
             </AppText>
             <View style={styles.hrWrapper}>
-              <AppText style={styles.kmph}>
+              <AppText style={[styles.kmph]}>
                 {hours === 0 ? minute : hour}
               </AppText>
-              <AppText style={styles.hr}>
+              <AppText
+                style={[
+                  styles.hr,
+                  { color: item.odometer_done <= 0 && colors.light4 },
+                ]}
+              >
                 /{hours >= 2 ? "hours." : hours === 0 ? "" : "hour."}
                 {minute > 1 ? "minutes" : "minute"}
               </AppText>
@@ -89,8 +105,22 @@ function ListItem({ onPress, item }) {
 
           {/*  */}
           <View style={styles.detailsContainer}>
-            <AppText style={styles.name}>{name}</AppText>
-            <AppText style={styles.date}>{date}</AppText>
+            <AppText
+              style={[
+                styles.name,
+                { color: item.odometer_done <= 0 && colors.light4 },
+              ]}
+            >
+              {name}
+            </AppText>
+            <AppText
+              style={[
+                styles.date,
+                { color: item.odometer_done <= 0 && colors.light4 },
+              ]}
+            >
+              {date}
+            </AppText>
           </View>
         </View>
       </Fonts>

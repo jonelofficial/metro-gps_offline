@@ -13,10 +13,12 @@ import Fonts from "./Fonts";
 function AppTextInput({
   secIcon,
   style,
+  containerStyle,
   setShowPassword,
   showPassword,
   onBlur,
   error,
+  disabled,
   ...otherProps
 }) {
   const [click, setClick] = useState(false);
@@ -28,12 +30,15 @@ function AppTextInput({
           styles.container,
           { borderColor: click ? defaultStyle.colors.primary : "transparent" },
           error,
+          containerStyle,
         ]}
       >
         <TextInput
           style={[defaultStyle.text, style]}
           onFocus={() => setClick(true)}
           onBlur={(onBlur && onBlur, () => setClick(false))}
+          editable={disabled}
+          selectTextOnFocus={disabled}
           {...otherProps}
         />
         {secIcon && (

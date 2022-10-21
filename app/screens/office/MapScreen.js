@@ -132,7 +132,7 @@ function MapScreen({ route, navigation }) {
         await fetchGasStation();
         const trip_id = await route.params.trip._id;
         setTrip(route.params.trip);
-        await handleLeftButton(trip_id);
+        trip.locations.left <= 0 && (await handleLeftButton(trip_id));
       } else {
         try {
           await fetchGasStation();

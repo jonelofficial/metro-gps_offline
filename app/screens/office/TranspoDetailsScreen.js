@@ -12,7 +12,7 @@ import {
 } from "react-native";
 
 import { transpoDetailsSchema } from "../../config/schema";
-import { createTrip } from "../../api/office/TripApi";
+import { createTrip, getVehicleTrip } from "../../api/office/TripApi";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import AppText from "../../components/AppText";
 import AppTextInput from "../../components/AppTextInput";
@@ -30,6 +30,7 @@ function TranspoDetailsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(false);
   const [imageUri, setImageUri] = useState(null);
   const [vehicleInfo, setVehicleInfo] = useState(null);
+  const [odometer, setOdometer] = useState();
   const { user, token, setOfflineTrips, offlineTrips, noInternet } =
     useContext(AuthContext);
 
@@ -39,9 +40,24 @@ function TranspoDetailsScreen({ navigation, route }) {
       setValue("odometer_image_path", route.params.image);
       setImageUri(route.params.image.uri);
     } else if (route.params?.params.vehicle_id) {
+      (async () => {
+        const vehicleTrip = await getVehicleTrip(
+          route.params.params.vehicle_id.id,
+          token
+        );
+        setOdometer(vehicleTrip);
+      })();
+
       setVehicleInfo(route.params.params.vehicle_id);
     }
   }, [route.params]);
+
+  useEffect(() => {
+    if (odometer?.data) {
+      clearErrors("odometer");
+      setValue("odometer", odometer.data.odometer);
+    }
+  }, [odometer]);
 
   const methods = useForm({
     resolver: yupResolver(transpoDetailsSchema),
@@ -68,7 +84,7 @@ function TranspoDetailsScreen({ navigation, route }) {
       //   uri: data.odometer_image_path?.uri,
       //   type: "image/jpg",
       // });
-      form.append("vehicle_id", vehicleInfo.vehicle_id._id);
+      form.append("vehicle_id", vehicleInfo.id);
       form.append("odometer", data.odometer);
       form.append("companion", data.companion);
 
@@ -76,7 +92,7 @@ function TranspoDetailsScreen({ navigation, route }) {
         const newObj = {
           id: offlineTrips.trips.length,
           image_path: data.odometer_image_path.uri,
-          vehicle_id: vehicleInfo.vehicle_id._id,
+          vehicle_id: vehicleInfo.id,
           odometer: data.odometer,
           companion: data.companion,
         };
@@ -86,6 +102,7 @@ function TranspoDetailsScreen({ navigation, route }) {
         }));
       } else {
         const res = await createTrip(form, token);
+        console.log(form);
         console.log(res);
         tripData = res.data;
         if (!res) {
@@ -118,11 +135,34 @@ function TranspoDetailsScreen({ navigation, route }) {
                 Vehicle Plate : {vehicleInfo && vehicleInfo.title.split(" ")[0]}
               </AppText>
             </View>
-            <AppText style={styles.formLabel}>Odometer:</AppText>
+            <View
+              style={{
+                flexDirection: "row",
+                justifyContent: "flex-start",
+                alignItems: "center",
+              }}
+            >
+              <AppText style={styles.formLabel}>Odometer: </AppText>
+              <AppText
+                style={{
+                  color: colors.lightMedium,
+                  fontSize: 13,
+                  width: "60%",
+                }}
+              >
+                {odometer?.data
+                  ? `Auto fill if not match on actual odometer report to immediate supervisor`
+                  : null}
+              </AppText>
+            </View>
             <AppFormField
+              containerStyle={{ backgroundColor: colors.primary }}
+              style={{ color: colors.white }}
               name="odometer"
               placeholder="Input current odometer"
               keyboardType="numeric"
+              defaultValue={odometer?.data ? `${odometer.data.odometer}` : null}
+              disabled={odometer?.data ? false : true}
             />
             <Spacer />
             <AppText style={styles.formLabel}>Odometer Picture:</AppText>
@@ -173,17 +213,18 @@ function TranspoDetailsScreen({ navigation, route }) {
 
             <AppText style={styles.formLabel}>Companion:</AppText>
             <AppFormField
+              containerStyle={{ backgroundColor: colors.primary }}
+              style={{ textAlignVertical: "top", color: colors.white }}
               name="companion"
               placeholder="Input companion"
               maxLength={255}
               numberOfLines={4}
               multiline
-              style={{ textAlignVertical: "top" }}
             />
             <Spacer />
             <SubmitButton
               title={user.trip_template === "office" ? "Drive" : "Next"}
-              color={noInternet ? "light" : "primary"}
+              color={noInternet ? "light" : "success"}
               disabled={noInternet}
             />
           </FormProvider>
