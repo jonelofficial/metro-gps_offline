@@ -102,8 +102,6 @@ function TranspoDetailsScreen({ navigation, route }) {
         }));
       } else {
         const res = await createTrip(form, token);
-        console.log(form);
-        console.log(res);
         tripData = res.data;
         if (!res) {
           setLoading(false);

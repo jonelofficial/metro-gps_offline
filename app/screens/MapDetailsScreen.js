@@ -32,7 +32,7 @@ function MapDetailsScreen({ route, navigation }) {
   }, []);
 
   const handleResumeTrip = async () => {
-    navigation.navigate(routes.MAP, {
+    await navigation.navigate(routes.MAP, {
       trip: item,
     });
   };
@@ -326,8 +326,9 @@ function MapDetailsScreen({ route, navigation }) {
             <View style={{ margin: 10 }}>
               <AppButton
                 title="RESUME"
-                color="success"
+                color={loading ? "light" : "success"}
                 onPress={handleResumeTrip}
+                disabled={loading}
               />
             </View>
           )}
