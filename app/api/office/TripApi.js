@@ -74,49 +74,19 @@ export const updateTrip = async (id, data, token) => {
   }
 };
 
-/*
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-*/
-
-export const deleteTrip = async (id, token) => {
+export const getVehicleTrip = async (id, token) => {
   try {
-    const response = await fetch(`${tripUrl}/${id}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(
+      `${process.env.BASEURL}/office/trips/vehicle?vehicleId=${id}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     const json = await response.json();
     return json;
   } catch (error) {
-    console.log("DELETE-TRIP API ERROR: ", error);
-  }
-};
-
-export const getSingleTrip = async (token, trip_id) => {
-  try {
-    const response = await fetch(`${tripUrl}/${trip_id}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-    const json = await response.json();
-    return json;
-  } catch (error) {
-    console.log("GET-SINGLE-TRIP API ERROR: ", error);
+    console.log("GET VEHICLE TRIP ERROR: ", error);
   }
 };

@@ -7,11 +7,20 @@ import colors from "../../config/colors";
 import fonts from "../../config/fonts";
 import Fonts from "../Fonts";
 
-function AppFormField({ name, icon, style, ...otherProps }) {
+function AppFormField({
+  name,
+  icon,
+  style,
+  containerStyle,
+  disabled,
+  defaultValue,
+  ...otherProps
+}) {
   const {
     formState: { errors },
     control,
   } = useFormContext();
+
   return (
     <>
       <Controller
@@ -19,13 +28,15 @@ function AppFormField({ name, icon, style, ...otherProps }) {
         control={control}
         render={({ field: { onChange, onBlur, value } }) => (
           <AppTextInput
+            containerStyle={containerStyle}
             error={errors[name] && styles.errorBox}
             style={style}
             secIcon={icon}
             onChangeText={onChange}
             onBlur={onBlur}
-            value={value}
+            value={defaultValue}
             {...otherProps}
+            disabled={disabled}
           />
         )}
       />

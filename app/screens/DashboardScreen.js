@@ -45,7 +45,6 @@ function DashboardScreen({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const [page, setPage] = useState(1);
   const [tripDate, setTripDate] = useState();
-
   const { setOfflineVehicles, setOfflineGasStations, offlineVehicles } =
     useContext(AuthContext);
 

@@ -1,12 +1,5 @@
 import React, { useContext, useEffect, useState } from "react";
-import {
-  Button,
-  StyleSheet,
-  View,
-  Dimensions,
-  Alert,
-  StatusBar,
-} from "react-native";
+import { Button, StyleSheet, View, Dimensions } from "react-native";
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useForm } from "react-hook-form";
@@ -20,13 +13,9 @@ import AppText from "../components/AppText";
 import AuthContext from "../auth/context";
 import defaultStyle from "../config/styles";
 import Screen from "../components/Screen";
-import ScanToastModal from "../components/modals/ScanToastModal";
 import Toast from "../components/toast/Toast";
-import { CameraType } from "expo-camera";
-import { selectTable } from "../utility/sqlite";
 
 function ScanScreen() {
-  const [isModalVisible, setModalVisible] = useState(false);
   const [hasPermission, setHasPermission] = useState(null);
   const [scanned, setScanned] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,83 +34,12 @@ function ScanScreen() {
     mode: "onSubmit",
   });
 
-  // Handle vehicle modal onsubmit
-  const onSubmit = async (data) => {
-    try {
-      setModalVisible(false);
-      setIsLoading(true);
-
-      if (noInternet) {
-        let isVehicle;
-        let index;
-        offlineVehicles.map((item, i) => {
-          if (item.plate_no === data.vehicle_id.toUpperCase()) {
-            isVehicle = true;
-            index = i;
-          }
-          return null;
-        });
-
-        if (isVehicle) {
-          setQrData({
-            vehicle_id: offlineVehicles[index].plate_no,
-            title: `${offlineVehicles[index].plate_no} ${offlineVehicles[index].brand}`,
-            description: offlineVehicles[index].vehicle_type,
-            targetScreen: "for validation only",
-            profile: offlineVehicles[index].profile || null,
-          });
-          setScanned(true);
-        } else {
-          alert("No vehicle found");
-          setIsLoading(false);
-          return setScanned(true);
-        }
-      } else {
-        const vehicleRes = await getVehicle(
-          data.vehicle_id.toUpperCase(),
-          token
-        );
-
-        if (vehicleRes?.error) {
-          alert(vehicleRes.error);
-          setIsLoading(false);
-          return setScanned(true);
-        }
-        setQrData({
-          vehicle_id: vehicleRes.data[0].plate_no,
-          title: `${vehicleRes.data[0].plate_no} ${vehicleRes.data[0].brand}`,
-          description: vehicleRes.data[0].vehicle_type,
-          targetScreen: "for validation only",
-          profile: null,
-        });
-        setScanned(true);
-      }
-    } catch (error) {
-      alert(`ERROR: ${error}`);
-    }
-  };
-
   useEffect(() => {
     (async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
       setHasPermission(status === "granted");
-      // console.log(await selectTable("trips"));
     })();
   }, []);
-
-  const vehicleAlert = () =>
-    Alert.alert(
-      "QR code not valid",
-      "Do you want to manual input vehicle number?",
-      [
-        {
-          text: "Cancel",
-          onPress: () => null,
-          style: "cancel",
-        },
-        { text: "OK", onPress: () => setModalVisible(true) },
-      ]
-    );
 
   /*
    * Valid JSON for login
@@ -162,6 +80,7 @@ function ScanScreen() {
               description: offlineVehicles[index].vehicle_type,
               targetScreen: "for validation only",
               profile: offlineVehicles[index].profile || null,
+              id: offlineVehicles[index]._id,
             });
             setScanned(true);
           } else {
@@ -186,6 +105,7 @@ function ScanScreen() {
             description: vehicleRes.data[0].vehicle_type,
             targetScreen: "for validation only",
             profile: vehicleRes.data[0].profile || null,
+            id: vehicleRes.data[0]._id,
           });
           setScanned(true);
         }
@@ -218,11 +138,6 @@ function ScanScreen() {
           setScanned(true);
           alert("No server response");
         }
-        // LOGIN BUT NOT VALID VEHICLE QR CODE
-      } else if (!json.vehicle_id && user) {
-        vehicleAlert();
-        setScanned(true);
-        // VALID VEHICLE QR CODE BUT NOT LOGIN
       } else if (json.vehicle_id && !user) {
         alert("Please login first");
         setScanned(true);
@@ -265,18 +180,6 @@ function ScanScreen() {
   return (
     <>
       <Screen style={styles.screen}>
-        <View
-          style={{
-            display: scanned || isModalVisible ? "none" : "flex",
-            position: "absolute",
-            width: "100%",
-            zIndex: 999,
-            top: StatusBar.currentHeight,
-          }}
-        >
-          <Button title="Manual" onPress={() => setModalVisible(true)} />
-        </View>
-
         <View style={[styles.container]}>
           <BarCodeScanner
             onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
@@ -317,14 +220,6 @@ function ScanScreen() {
           />
         )}
       </Screen>
-
-      {/* Toast Modal */}
-      <ScanToastModal
-        isModalVisible={isModalVisible}
-        setModalVisible={setModalVisible}
-        method={method}
-        onSubmit={onSubmit}
-      />
     </>
   );
 }
