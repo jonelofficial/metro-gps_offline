@@ -74,7 +74,6 @@ function MapDetailsScreen({ route, navigation }) {
       }
     );
   };
-
   return (
     <Screen>
       <View style={{ height: "50%" }}>

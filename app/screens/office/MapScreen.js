@@ -16,7 +16,11 @@ import { useStopwatch } from "react-timer-hook";
 import { useForm } from "react-hook-form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import { mapDoneSchema, mapGasSchema } from "../../config/schema";
+import {
+  mapArrviedSchema,
+  mapDoneSchema,
+  mapGasSchema,
+} from "../../config/schema";
 import { updateTrip } from "../../api/office/TripApi";
 import { getGasStation } from "../../api/GasStationApi";
 import { gasCar } from "../../api/office/DieselApi";
@@ -27,7 +31,6 @@ import AppText from "../../components/AppText";
 import cache from "../../utility/cache";
 import DrivingIndicator from "../../components/indicator/DrivingIndicator";
 
-import DoneModal from "../../components/modals/DoneModal";
 import Screen from "../../components/Screen";
 import useLocation from "../../hooks/useLocation";
 import Spacer from "../../components/Spacer";
@@ -35,6 +38,7 @@ import SuccessIndicator from "../../components/indicator/SuccessIndicator";
 import colors from "../../config/colors";
 import routes from "../../navigation/routes";
 import GasModal from "../../components/modals/GasModal";
+import ArrivedModal from "../../components/modals/ArrivedModal";
 
 function MapScreen({ route, navigation }) {
   const [trip, setTrip] = useState();
@@ -52,9 +56,9 @@ function MapScreen({ route, navigation }) {
   const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
 
-  // DONE MODAL
-  const [doneModal, setDoneModal] = useState(false);
-  const [doneLoading, setDoneLoading] = useState(false);
+  // ARRIVED MODAL
+  const [arrivedModal, setArrivedModal] = useState(false);
+  const [arrivedModalLoading, setArrivedModalLoading] = useState(false);
 
   //Context
   const {
@@ -67,13 +71,14 @@ function MapScreen({ route, navigation }) {
     netInfo,
     currentLocation,
     setCurrentLocation,
+    locationPermission,
+    setOffScan,
   } = useContext(AuthContext);
 
   // GPS
   const {
     arrivedLoading,
     leftLoading,
-    locationPermission,
     handleArrived,
     handleLeft,
     setLeftLoading,
@@ -85,19 +90,19 @@ function MapScreen({ route, navigation }) {
   // TIMER
   const { seconds, minutes, hours } = useStopwatch({ autoStart: true });
 
-  // DONE FORM
-  const methodDone = useForm({
-    resolver: yupResolver(mapDoneSchema),
+  // ARRIVED FORM
+  const arrivedMethod = useForm({
+    resolver: yupResolver(mapArrviedSchema),
     mode: "onSubmit",
   });
-  const { reset: doneReset } = methodDone;
+  const { reset: arrivedReset } = arrivedMethod;
 
   // GAS FORM
   const method = useForm({
     resolver: yupResolver(mapGasSchema),
     mode: "onSubmit",
   });
-  const { reset } = method;
+  const { reset, clearErrors, setValue: setGasValue } = method;
 
   // HANDLE BACK
   const backAction = () => {
@@ -117,7 +122,8 @@ function MapScreen({ route, navigation }) {
                 trip?.locations.length % 2 !== 0
                 // (!noInternet || !offlineTrips.trips.length > 0)
               ) {
-                await handleArrivedButton();
+                // await handleArrivedButton();
+                setArrivedModal(true);
               }
               setDoneModal(true);
             },
@@ -128,6 +134,7 @@ function MapScreen({ route, navigation }) {
 
   useEffect(() => {
     (async () => {
+      setOffScan(false);
       if (!noInternet) {
         await fetchGasStation();
         const trip_id = await route.params.trip._id;
@@ -244,10 +251,10 @@ function MapScreen({ route, navigation }) {
   };
 
   // ADD ARRIVED LOCATION AND UPDATE POINTS ROUTE ON THE TRIP TRANSACTION
-  const handleArrivedButton = async () => {
+  const handleArrivedButton = async (odometer) => {
     try {
       setArrivedLoading(true);
-      const rightRes = await handleArrived(trip._id);
+      const rightRes = await handleArrived(trip._id, odometer);
       setLocationId((currentValue) => [...currentValue, rightRes._id]);
       const newObjt = {
         points: points,
@@ -386,6 +393,23 @@ function MapScreen({ route, navigation }) {
     navigation.replace(routes.DASHBOARD);
   };
 
+  const handleArrivedModalButton = async (data) => {
+    Keyboard.dismiss();
+    setArrivedModalLoading(true);
+
+    await handleArrivedButton(data.odometer);
+    const newObjt = {
+      odometer_done: data.odometer,
+      points: points,
+    };
+    await updateTrip(trip._id, newObjt, token);
+    await AsyncStorage.removeItem("cache" + user.userId);
+
+    arrivedReset();
+    setArrivedModalLoading(false);
+    setArrivedModal(false);
+  };
+
   // MAP ANIMATION ON USER LOCATION CHANGEDs
 
   const mapView = createRef();
@@ -414,7 +438,6 @@ function MapScreen({ route, navigation }) {
     );
   };
 
-  // console.log("OFFLINE DATA: ", offlineTrips, "/n ONLINE DATA: ", trip);
   return (
     <>
       <Screen>
@@ -591,7 +614,10 @@ function MapScreen({ route, navigation }) {
                   onPress={
                     noInternet || offlineTrips.trips.length > 0
                       ? () => handleOfflineArrived()
-                      : () => handleArrivedButton()
+                      : () => {
+                          // handleArrivedButton();
+                          setArrivedModal(true);
+                        }
                   }
                   isLoading={arrivedLoading}
                   disabled={
@@ -653,7 +679,7 @@ function MapScreen({ route, navigation }) {
                     ? "light"
                     : "black"
                 }
-                onPress={() => setDoneModal(true)}
+                onPress={() => navigation.replace(routes.DASHBOARD)}
                 disabled={
                   (trip?.locations.length % 2 !== 0 &&
                     trip?.locations.length > 0) ||
@@ -690,6 +716,8 @@ function MapScreen({ route, navigation }) {
         value={value}
         open={open}
         method={method}
+        clearErrors={clearErrors}
+        setGasValue={setGasValue}
         onSubmit={
           noInternet || offlineTrips.trips.length > 0
             ? handleOfflineGas
@@ -698,17 +726,13 @@ function MapScreen({ route, navigation }) {
         loading={gasLoading}
       />
 
-      {/* DONE MODAL */}
-      <DoneModal
-        doneModal={doneModal}
-        setDoneModal={setDoneModal}
-        methodDone={methodDone}
-        handleDoneButton={
-          noInternet || offlineTrips.trips.length > 0
-            ? handleOfflineDone
-            : handleDoneButton
-        }
-        doneLoading={doneLoading}
+      {/* ARRIVED MODAL */}
+      <ArrivedModal
+        arrivedModal={arrivedModal}
+        setArrivedModal={setArrivedModal}
+        arrivedMethod={arrivedMethod}
+        handleArrivedButton={handleArrivedModalButton}
+        arrivedModalLoading={arrivedModalLoading}
       />
     </>
   );

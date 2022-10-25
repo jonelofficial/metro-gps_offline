@@ -108,6 +108,7 @@ function TranspoDetailsScreen({ navigation, route }) {
           return alert("No server response. Please try Again");
         }
       }
+
       reset();
       setImageUri(null);
       setLoading(false);

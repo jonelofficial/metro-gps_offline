@@ -12,7 +12,6 @@ export default useLocation = () => {
   const LONGITUDE_DELTA = LATITUDE_DELTA * ASPECT_RATIO;
   const { token } = useContext(AuthContext);
 
-  const [locationPermission, setLocationPermission] = useState(false);
   const [leftLoading, setLeftLoading] = useState(false);
   const [arrivedLoading, setArrivedLoading] = useState(false);
   const [currentLocation, setCurrentLocation] = useState();
@@ -26,7 +25,6 @@ export default useLocation = () => {
 
       if (!granted) return;
 
-      setLocationPermission(true);
       const result = await Location.getCurrentPositionAsync({
         enableHighAccuracy: true,
         accuracy: Location.LocationAccuracy.BestForNavigation,
@@ -43,7 +41,7 @@ export default useLocation = () => {
     }
   };
 
-  const handleArrived = async (trip) => {
+  const handleArrived = async (trip, odometer) => {
     try {
       const result = await Location.getCurrentPositionAsync({
         enableHighAccuracy: true,
@@ -62,6 +60,7 @@ export default useLocation = () => {
           long: result.coords.longitude,
           address: res,
           status: "arrived",
+          odometer: odometer,
         },
         token
       );
@@ -152,13 +151,13 @@ export default useLocation = () => {
   };
 
   useEffect(() => {
-    // const loc = setInterval(() => {
-    getLocation();
-    // }, 1000);
+    const loc = setInterval(() => {
+      // getLocation();
+    }, 15000);
 
-    // return () => {
-    //   clearInterval(loc);
-    // };
+    return () => {
+      clearInterval(loc);
+    };
   }, []);
 
   return {
@@ -171,7 +170,6 @@ export default useLocation = () => {
     setArrivedLoading,
     width,
     setCurrentLocation,
-    locationPermission,
     offlineHandleArrived,
     offlineHandleLeft,
   };

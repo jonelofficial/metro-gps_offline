@@ -45,8 +45,12 @@ function DashboardScreen({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const [page, setPage] = useState(1);
   const [tripDate, setTripDate] = useState();
-  const { setOfflineVehicles, setOfflineGasStations, offlineVehicles } =
-    useContext(AuthContext);
+  const {
+    setOfflineVehicles,
+    setOfflineGasStations,
+    offlineVehicles,
+    setOffScan,
+  } = useContext(AuthContext);
 
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
@@ -206,6 +210,7 @@ function DashboardScreen({ navigation }) {
   const renderItem = ({ item }) => {
     return (
       <ListItem
+        setOffScan={setOffScan}
         item={item}
         onPress={() => navigation.navigate(routes.MAPVIEW, { item })}
       />

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
 import dayjs from "dayjs";
 import getPathLength from "geolib/es/getPathLength";
@@ -8,8 +8,11 @@ import fonts from "../../config/fonts";
 import AppText from "../AppText";
 import Fonts from "../Fonts";
 
-function ListItem({ onPress, item }) {
-  if (item.locations.length === 0 || !item.points) return null;
+function ListItem({ onPress, item, setOffScan }) {
+  useEffect(() => {
+    if (item.locations.length === 0 || !item.points) return null;
+    item.odometer_done <= 0 && setOffScan(true);
+  }, []);
 
   const arrayLength = item.locations.length - 1;
 

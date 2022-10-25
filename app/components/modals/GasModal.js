@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { FormProvider } from "react-hook-form";
@@ -22,7 +22,16 @@ export default function GasModal({
   method,
   onSubmit,
   loading,
+  clearErrors,
+  setGasValue,
 }) {
+  useEffect(() => {
+    if (value == "507f191e810c19729de860ea") {
+      setGasValue("gas_station_name", "");
+    }
+    clearErrors("gas_station_name");
+    setGasValue("gas_station_name", "null");
+  }, [value]);
   return (
     <View>
       <Modal
@@ -56,20 +65,39 @@ export default function GasModal({
 
             <Spacer />
 
-            <AppText style={{ marginBottom: 5 }}>Odemeter:</AppText>
+            {value == "507f191e810c19729de860ea" && (
+              <>
+                <AppText style={{ marginBottom: 5 }}>Gas Station Name:</AppText>
+                <AppFormField
+                  name="gas_station_name"
+                  placeholder="Input gas station name..."
+                />
+                <Spacer />
+              </>
+            )}
 
+            <AppText style={{ marginBottom: 5 }}>Odemeter:</AppText>
             <AppFormField
               name="odometer"
               placeholder="Input odometer..."
               keyboardType="numeric"
             />
-
             <Spacer />
+
             <AppText style={{ marginBottom: 5 }}>Liter:</AppText>
 
             <AppFormField
               name="liter"
               placeholder="Input liter gas..."
+              keyboardType="numeric"
+            />
+            <Spacer />
+
+            <AppText style={{ marginBottom: 5 }}>Amount:</AppText>
+
+            <AppFormField
+              name="amount"
+              placeholder="Input amount of the gas..."
               keyboardType="numeric"
             />
             <Spacer />
