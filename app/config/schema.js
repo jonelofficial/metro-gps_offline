@@ -23,6 +23,7 @@ export const vehicleIdSchema = Yup.object().shape({
 // MAP SCREEN
 export const mapGasSchema = Yup.object().shape({
   gas_station_id: Yup.string().nullable().required().label("Gas Station"),
+  gas_station_name: Yup.string().required().label("Gas Station Name"),
   odometer: Yup.string()
     .matches(/^[0-9]+$/, "Must be only digits")
     .required()
@@ -31,11 +32,22 @@ export const mapGasSchema = Yup.object().shape({
     .matches(/^[0-9]+$/, "Must be only digits")
     .required()
     .label("Liter"),
+  amount: Yup.string()
+    .matches(/^[0-9]+$/, "Must be only digits")
+    .required()
+    .label("Amount"),
 });
 
 // MAP SCREEN
 export const mapDoneSchema = Yup.object().shape({
   odometer_done: Yup.string()
+    .matches(/^[0-9]+$/, "Must be only digits")
+    .required()
+    .label("Odometer"),
+});
+
+export const mapArrviedSchema = Yup.object().shape({
+  odometer: Yup.string()
     .matches(/^[0-9]+$/, "Must be only digits")
     .required()
     .label("Odometer"),

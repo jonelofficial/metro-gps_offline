@@ -26,7 +26,8 @@ function ScanScreen() {
     targetScreen: null,
     profile: null,
   });
-  const { user, token, offlineVehicles, noInternet } = useContext(AuthContext);
+  const { user, token, offlineVehicles, noInternet, offScan } =
+    useContext(AuthContext);
   const { height, width } = Dimensions.get("screen");
 
   const method = useForm({
@@ -171,8 +172,34 @@ function ScanScreen() {
     return (
       <View style={styles.cameraPermission}>
         <AppText
-          style={{ textAlign: "center" }}
-        >{`Accept Camera Permission\n and try again.`}</AppText>
+          style={{
+            textAlign: "center",
+            flexWrap: "wrap",
+            alignItems: "flex-start",
+          }}
+        >{`Accept Camera permission and try again.`}</AppText>
+      </View>
+    );
+  }
+  if (offScan) {
+    return (
+      <View style={[styles.cameraPermission, { backgroundColor: "black" }]}>
+        <ViewFinder
+          height={250}
+          width={250}
+          borderLength={50}
+          borderRadius={15}
+          loading={isLoading}
+        />
+        <AppText
+          style={{
+            textAlign: "center",
+            color: "red",
+            flexWrap: "wrap",
+            alignItems: "flex-start",
+            padding: 20,
+          }}
+        >{`You have an unfinished trip. Please report to your immediate supervisor or resume the transaction.`}</AppText>
       </View>
     );
   }
@@ -245,7 +272,6 @@ const styles = StyleSheet.create({
     width: "100%",
     height: "100%",
     justifyContent: "center",
-    alignItems: "center",
   },
 });
 

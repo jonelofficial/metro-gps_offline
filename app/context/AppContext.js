@@ -24,6 +24,8 @@ function AppContext({ children }) {
   const [user, setUser] = useState();
   const [token, setToken] = useState();
   const [currentLocation, setCurrentLocation] = useState();
+  const [locationPermission, setLocationPermission] = useState(false);
+  const [offScan, setOffScan] = useState(false);
 
   const [offlineVehicles, setOfflineVehicles] = useState();
   const [offlineGasStations, setOfflineGasStations] = useState();
@@ -63,6 +65,7 @@ function AppContext({ children }) {
         const res = await MediaLibrary.requestPermissionsAsync();
         const { granted } = await Location.requestForegroundPermissionsAsync();
         if (status === "granted" && res.status === "granted" && granted) {
+          setLocationPermission(true);
           restoreUser();
           watch_location();
         } else {
@@ -144,7 +147,10 @@ function AppContext({ children }) {
         setOfflineGasStations,
         noInternet,
         currentLocation,
+        locationPermission,
         setCurrentLocation,
+        setOffScan,
+        offScan,
       }}
     >
       {children}
