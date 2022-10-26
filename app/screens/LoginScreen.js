@@ -34,7 +34,6 @@ function LoginScreen({ navigation }) {
   const [showPassword, setShowPassword] = useState(false);
   const { logIn } = useAuth();
   const { setOfflineVehicles, setOfflineGasStations } = useContext(AuthContext);
-
   useEffect(() => {
     (async () => {
       await createTable(

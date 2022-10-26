@@ -11,7 +11,9 @@ import Fonts from "../Fonts";
 function ListItem({ onPress, item, setOffScan }) {
   useEffect(() => {
     if (item.locations.length === 0 || !item.points) return null;
-    item.odometer_done <= 0 && setOffScan(true);
+    if (item.odometer_done <= 0 || item.locations.length % 2 !== 0) {
+      setOffScan(true);
+    }
   }, []);
 
   const arrayLength = item.locations.length - 1;

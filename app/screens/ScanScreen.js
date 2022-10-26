@@ -14,6 +14,8 @@ import AuthContext from "../auth/context";
 import defaultStyle from "../config/styles";
 import Screen from "../components/Screen";
 import Toast from "../components/toast/Toast";
+import useAuth from "../auth/useAuth";
+import authStorage from "../auth/storage";
 
 function ScanScreen() {
   const [hasPermission, setHasPermission] = useState(null);
@@ -34,6 +36,8 @@ function ScanScreen() {
     resolver: yupResolver(vehicleIdSchema),
     mode: "onSubmit",
   });
+
+  const { logIn } = useAuth();
 
   useEffect(() => {
     (async () => {
@@ -122,18 +126,8 @@ function ScanScreen() {
             }, 1000);
           } else {
             const loginRes = await useLogin(json);
-            setUserData(loginRes);
-            setQrData({
-              vehicle_id: null,
-              title: `${loginRes.user.first_name} ${loginRes.user.last_name}`,
-              description: loginRes.user.trip_template,
-              targetScreen: null,
-              profile:
-                loginRes.user.profile !== null
-                  ? `${BASEURL}/${loginRes.user.profile}`
-                  : undefined,
-            });
-            setScanned(true);
+            logIn(loginRes);
+            authStorage.storeToken(loginRes);
           }
         } catch (error) {
           setScanned(true);

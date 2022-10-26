@@ -16,11 +16,7 @@ import { useStopwatch } from "react-timer-hook";
 import { useForm } from "react-hook-form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-import {
-  mapArrviedSchema,
-  mapDoneSchema,
-  mapGasSchema,
-} from "../../config/schema";
+import { mapArrviedSchema, mapGasSchema } from "../../config/schema";
 import { updateTrip } from "../../api/office/TripApi";
 import { getGasStation } from "../../api/GasStationApi";
 import { gasCar } from "../../api/office/DieselApi";
