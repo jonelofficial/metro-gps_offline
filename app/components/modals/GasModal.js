@@ -25,13 +25,13 @@ export default function GasModal({
   clearErrors,
   setGasValue,
 }) {
-  useEffect(() => {
-    if (value == "507f191e810c19729de860ea") {
-      setGasValue("gas_station_name", "");
-    }
-    clearErrors("gas_station_name");
-    setGasValue("gas_station_name", "null");
-  }, [value]);
+  // useEffect(() => {
+  //   if (value == "507f191e810c19729de860ea") {
+  //     setGasValue("gas_station_name", "");
+  //   }
+  //   clearErrors("gas_station_name");
+  //   setGasValue("gas_station_name", "null");
+  // }, [value]);
   return (
     <View>
       <Modal
@@ -52,7 +52,7 @@ export default function GasModal({
           <Spacer />
 
           <FormProvider {...method} onSubmit={onSubmit}>
-            <AppText style={{ marginBottom: 5 }}>Gas Station:</AppText>
+            {/* <AppText style={{ marginBottom: 5 }}>Gas Station:</AppText>
 
             <AppFormPicker
               name="gas_station_id"
@@ -74,7 +74,7 @@ export default function GasModal({
                 />
                 <Spacer />
               </>
-            )}
+            )} */}
 
             <AppText style={{ marginBottom: 5 }}>Odemeter:</AppText>
             <AppFormField

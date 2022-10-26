@@ -30,6 +30,7 @@ function MapDetailsScreen({ route, navigation }) {
     fetchGasStation();
     setPoints(item.points);
   }, []);
+  // console.log(item);
 
   const handleResumeTrip = async () => {
     await navigation.navigate(routes.MAP, {
@@ -310,14 +311,15 @@ function MapDetailsScreen({ route, navigation }) {
                   Date:{" "}
                   {dayjs(gasData.createdAt).format("YYYY-MM-DD | hh:mm A")}
                 </AppText>
-                <AppText>
+                {/* <AppText>
                   Gas Station:
                   {gasStation.map((item) => {
                     return item.value === gasData.gas_station;
                   })}
-                </AppText>
+                </AppText> */}
                 <AppText>Liter: {gasData.liter}</AppText>
                 <AppText>Odometer: {gasData.odometer}</AppText>
+                <AppText>Amount: {gasData.amount}</AppText>
               </>
             )}
           </View>

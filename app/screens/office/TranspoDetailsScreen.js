@@ -109,10 +109,10 @@ function TranspoDetailsScreen({ navigation, route }) {
         }
       }
 
-      reset();
       setImageUri(null);
       setLoading(false);
 
+      reset();
       noInternet
         ? navigation.navigate(routes.MAP)
         : navigation.navigate(routes.MAP, {

@@ -22,8 +22,8 @@ export const vehicleIdSchema = Yup.object().shape({
 
 // MAP SCREEN
 export const mapGasSchema = Yup.object().shape({
-  gas_station_id: Yup.string().nullable().required().label("Gas Station"),
-  gas_station_name: Yup.string().required().label("Gas Station Name"),
+  // gas_station_id: Yup.string().nullable().required().label("Gas Station"),
+  // gas_station_name: Yup.string().required().label("Gas Station Name"),
   odometer: Yup.string()
     .matches(/^[0-9]+$/, "Must be only digits")
     .required()
