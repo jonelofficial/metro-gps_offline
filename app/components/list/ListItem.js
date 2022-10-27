@@ -1,6 +1,7 @@
 import React, { useEffect } from "react";
 import { StyleSheet, View, TouchableOpacity } from "react-native";
 import dayjs from "dayjs";
+
 import getPathLength from "geolib/es/getPathLength";
 
 import colors from "../../config/colors";

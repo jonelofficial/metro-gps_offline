@@ -84,7 +84,9 @@ function MapScreen({ route, navigation }) {
   } = useLocation();
 
   // TIMER
-  const { seconds, minutes, hours } = useStopwatch({ autoStart: true });
+  const { seconds, minutes, hours, start, pause } = useStopwatch({
+    autoStart: true,
+  });
 
   // ARRIVED FORM
   const arrivedMethod = useForm({
@@ -132,14 +134,14 @@ function MapScreen({ route, navigation }) {
     (async () => {
       setOffScan(false);
       if (!noInternet) {
-        await fetchGasStation();
+        // await fetchGasStation();
         const trip_id = await route.params.trip._id;
         setTrip(route.params.trip);
         route.params.trip.locations.length <= 0 &&
           (await handleLeftButton(trip_id));
       } else {
         try {
-          await fetchGasStation();
+          // await fetchGasStation();
           await handleOfflineLeft();
         } catch (error) {
           alert(`USEEFFECT OFFLINE ERROR: ${error}`);
@@ -229,6 +231,7 @@ function MapScreen({ route, navigation }) {
   const handleLeftButton = async (trip_id) => {
     try {
       setLeftLoading(true);
+      start(); // for timer
       const leftRes = await handleLeft(trip_id);
       setLocationId((currentValue) => [...currentValue, leftRes._id]);
       const newObjt = {
@@ -392,6 +395,7 @@ function MapScreen({ route, navigation }) {
   const handleArrivedModalButton = async (data) => {
     Keyboard.dismiss();
     setArrivedModalLoading(true);
+    pause(); // for timer
 
     await handleArrivedButton(data.odometer);
     const newObjt = {
@@ -675,7 +679,12 @@ function MapScreen({ route, navigation }) {
                     ? "light"
                     : "black"
                 }
-                onPress={() => navigation.replace(routes.DASHBOARD)}
+                // onPress={() => navigation.replace(routes.DASHBOARD)}
+                onPress={() =>
+                  navigation.reset({
+                    routes: [{ index: 0, name: routes.DASHBOARD }],
+                  })
+                }
                 disabled={
                   (trip?.locations.length % 2 !== 0 &&
                     trip?.locations.length > 0) ||

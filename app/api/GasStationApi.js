@@ -1,7 +1,4 @@
-// import { BASEURL } from "@env";
-
 const tripUrl = `${process.env.BASEURL}/gas-station/stations`;
-// console.log("URL: ", tripUrl);
 
 export const getGasStation = async (token) => {
   try {

@@ -1,7 +1,4 @@
-// import { BASEURL } from "@env";
-
 const baseUrl = `${process.env.BASEURL}/auth/login`;
-console.log("URL: ", baseUrl);
 
 export const useLogin = async (user) => {
   try {
