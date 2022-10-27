@@ -1,7 +1,4 @@
-// import { BASEURL } from "@env";
-
 const baseUrl = `${process.env.BASEURL}/vehicle/car/user`;
-// console.log("URL: ", baseUrl);
 
 export const getVehicle = async (id, token) => {
   try {

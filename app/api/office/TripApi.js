@@ -1,14 +1,10 @@
-// import { BASEURL } from "@env";
-
 const tripUrl = `${process.env.BASEURL}/office/trips`;
-// console.log("URL: ", tripUrl);
 
 export const createTrip = async (form, token) => {
   try {
     const response = await fetch(`${process.env.BASEURL}/office/trip`, {
       method: "POST",
       headers: {
-        // Accept: "application/json",
         "Content-Type": "multipart/form-data",
         Authorization: `Bearer ${token}`,
       },
@@ -21,7 +17,6 @@ export const createTrip = async (form, token) => {
   }
 };
 
-// USED
 export const getTrip = async (token, page) => {
   try {
     const response = await fetch(`${tripUrl}/user?page=${page}`, {
@@ -37,7 +32,7 @@ export const getTrip = async (token, page) => {
 };
 
 /*
- * FOR SEARCH FUNCTION // USED
+ * FOR SEARCH FUNCTION
  */
 export const findTrip = async (token, trip_date, page) => {
   try {
@@ -56,7 +51,6 @@ export const findTrip = async (token, trip_date, page) => {
   }
 };
 
-// USED
 export const updateTrip = async (id, data, token) => {
   try {
     const response = await fetch(`${process.env.BASEURL}/office/trip/${id}`, {

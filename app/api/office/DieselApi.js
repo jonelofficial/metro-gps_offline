@@ -1,7 +1,4 @@
-// import { BASEURL } from "@env";
-
 const tripUrl = `${process.env.BASEURL}/office/diesel`;
-// console.log("URL: ", tripUrl);
 
 // Create diesel
 export const gasCar = async (data, token) => {
