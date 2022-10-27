@@ -1,6 +1,6 @@
 import * as Location from "expo-location";
 import { useContext, useEffect, useState } from "react";
-import { Dimensions } from "react-native";
+import { Dimensions, ToastAndroid } from "react-native";
 import { createLocation } from "../api/office/LocationsApi";
 
 import AuthContext from "../auth/context";
@@ -18,8 +18,9 @@ export default useLocation = () => {
 
   // const apiKey = "AIzaSyDbCxrt0H-TQpGGDLlloTLfNKK5AAgtVVc";
 
-  const getLocation = async () => {
+  const getLocation = async (trip) => {
     try {
+      ToastAndroid.show(`Syncing`, ToastAndroid.LONG);
       const { granted } = await Location.requestForegroundPermissionsAsync();
       // Location.setGoogleApiKey(apiKey);
 
@@ -29,13 +30,21 @@ export default useLocation = () => {
         enableHighAccuracy: true,
         accuracy: Location.LocationAccuracy.BestForNavigation,
       });
-      setCurrentLocation({
-        speed: result.coords.speed,
+
+      const res = await Location.reverseGeocodeAsync({
         latitude: result.coords.latitude,
         longitude: result.coords.longitude,
-        latitudeDelta: LATITUDE_DELTA,
-        longitudeDelta: LONGITUDE_DELTA,
       });
+
+      const api = {
+        trip_id: trip,
+        lat: result.coords.latitude,
+        long: result.coords.longitude,
+        address: res,
+        status: "interval",
+      };
+
+      return api;
     } catch (error) {
       console.log("GET LOCATION ERROR: ", error);
     }
@@ -151,13 +160,12 @@ export default useLocation = () => {
   };
 
   useEffect(() => {
-    const loc = setInterval(() => {
-      // getLocation();
-    }, 15000);
-
-    return () => {
-      clearInterval(loc);
-    };
+    // const loc = setInterval(() => {
+    //   getLocation();
+    // }, 500);
+    // return () => {
+    //   clearInterval(loc);
+    // };
   }, []);
 
   return {
@@ -172,5 +180,6 @@ export default useLocation = () => {
     setCurrentLocation,
     offlineHandleArrived,
     offlineHandleLeft,
+    getLocation,
   };
 };

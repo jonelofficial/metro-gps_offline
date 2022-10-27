@@ -10,14 +10,36 @@ import AppText from "../AppText";
 import Fonts from "../Fonts";
 
 function ListItem({ onPress, item, setOffScan }) {
+  let newMinutes = 0;
+  let newHours = 0;
+  let newLocations = [];
+
+  item.locations
+    .filter(
+      (location) => location.status == "left" || location.status == "arrived"
+    )
+    .map((filteredLocation) => {
+      newLocations.push(filteredLocation);
+    });
+
   useEffect(() => {
     if (item.locations.length === 0 || !item.points) return null;
-    if (item.odometer_done <= 0 || item.locations.length % 2 !== 0) {
+    if (item.odometer_done <= 0 || newLocations.length % 2 !== 0) {
       setOffScan(true);
     }
   }, []);
 
-  const arrayLength = item.locations.length - 1;
+  newLocations.length % 2 === 0 &&
+    newLocations.map((location, index) => {
+      if (index % 2 === 0) {
+        const date1 = dayjs(newLocations[index + 1].date);
+        const date2 = dayjs(location.date);
+        const minutes = date1.diff(date2, "minutes");
+        const hours = date1.diff(date2, "h");
+        newMinutes = newMinutes + minutes;
+        newHours = newHours + hours;
+      }
+    });
 
   //  Getting KM
 
@@ -26,19 +48,12 @@ function ListItem({ onPress, item, setOffScan }) {
 
   //  Getting TIME
 
-  const date1 = dayjs(item.locations[arrayLength].date);
-  const date2 = dayjs(item.locations[0].date);
-  const minutes = date1.diff(date2, "minutes");
-  const hours = date1.diff(date2, "h");
-  const finalHours = hours * 60;
-  const minute = minutes - finalHours;
-  const hour = `${hours}.${minute === 0 ? "00" : minute}`;
+  const minute = newMinutes;
+
+  const hour = `${newHours}.${minute == 0 ? "00" : minute}`;
 
   const name = dayjs(item.trip_date).format("h:mm A");
   const date = dayjs(item.trip_date).format("MM-DD-YY");
-  const location = !item.locations[arrayLength].address[0]
-    ? "Unknown"
-    : item.locations[arrayLength].address[0].city;
 
   return (
     <TouchableOpacity onPress={onPress}>
@@ -46,7 +61,11 @@ function ListItem({ onPress, item, setOffScan }) {
         <View
           style={[
             styles.container,
-            { backgroundColor: item.odometer_done <= 0 && colors.danger },
+            {
+              backgroundColor:
+                (item.odometer_done <= 0 || newLocations.length % 2 !== 0) &&
+                colors.danger,
+            },
           ]}
         >
           <View
@@ -59,13 +78,18 @@ function ListItem({ onPress, item, setOffScan }) {
               borderWidth: 1,
               borderRadius: 5,
               borderColor:
-                item.odometer_done <= 0 ? colors.light4 : colors.success,
+                item.odometer_done <= 0 || newLocations.length % 2 !== 0
+                  ? colors.light4
+                  : colors.success,
             }}
           >
             <AppText
               style={{
                 fontSize: 14,
-                color: item.odometer_done <= 0 ? colors.light4 : colors.success,
+                color:
+                  item.odometer_done <= 0 || newLocations.length % 2 !== 0
+                    ? colors.light4
+                    : colors.success,
                 marginHorizontal: 5,
               }}
             >{`#${
@@ -84,37 +108,51 @@ function ListItem({ onPress, item, setOffScan }) {
             <AppText
               style={[
                 styles.km,
-                { color: item.odometer_done <= 0 && colors.light4 },
+                {
+                  color:
+                    (item.odometer_done <= 0 ||
+                      newLocations.length % 2 !== 0) &&
+                    colors.light4,
+                },
               ]}
             >
               {meter < 1000 ? meter : km.toFixed(0)} {meter < 1000 ? "m" : "km"}
             </AppText>
             <View style={styles.hrWrapper}>
               <AppText style={[styles.kmph]}>
-                {hours === 0 ? minute : hour}
+                {/* {hours === 0 ? minute : hour} */}
+                {newHours == 0 ? minute : hour}
               </AppText>
               <AppText
                 style={[
                   styles.hr,
-                  { color: item.odometer_done <= 0 && colors.light4 },
+                  {
+                    color:
+                      (item.odometer_done <= 0 ||
+                        newLocations.length % 2 !== 0) &&
+                      colors.light4,
+                  },
                 ]}
               >
-                /{hours >= 2 ? "hours." : hours === 0 ? "" : "hour."}
+                {/* /{hours >= 2 ? "hours." : hours === 0 ? "" : "hour."} */}/
+                {newHours >= 2 ? "hours." : newHours == 0 ? "" : "hour."}
                 {minute > 1 ? "minutes" : "minute"}
               </AppText>
             </View>
           </View>
           {/*  */}
-          {/* <View style={styles.locationContainer}>
-            <AppText style={styles.location}>{location}</AppText>
-          </View> */}
 
           {/*  */}
           <View style={styles.detailsContainer}>
             <AppText
               style={[
                 styles.name,
-                { color: item.odometer_done <= 0 && colors.light4 },
+                {
+                  color:
+                    (item.odometer_done <= 0 ||
+                      newLocations.length % 2 !== 0) &&
+                    colors.light4,
+                },
               ]}
             >
               {name}
@@ -122,7 +160,12 @@ function ListItem({ onPress, item, setOffScan }) {
             <AppText
               style={[
                 styles.date,
-                { color: item.odometer_done <= 0 && colors.light4 },
+                {
+                  color:
+                    (item.odometer_done <= 0 ||
+                      newLocations.length % 2 !== 0) &&
+                    colors.light4,
+                },
               ]}
             >
               {date}
