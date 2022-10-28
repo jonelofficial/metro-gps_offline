@@ -34,7 +34,7 @@ function AppFormField({
             secIcon={icon}
             onChangeText={onChange}
             onBlur={onBlur}
-            value={defaultValue}
+            defaultValue={defaultValue}
             {...otherProps}
             disabled={disabled}
           />

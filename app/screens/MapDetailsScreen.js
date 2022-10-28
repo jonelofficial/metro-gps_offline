@@ -165,7 +165,9 @@ function MapDetailsScreen({ route, navigation }) {
 
         {
           /* Checking if the `odometer_done` attribute is unsave. */
-          (item?.odometer_done < 0 || item?.odometer_done === null) && (
+          (item?.odometer_done < 0 ||
+            item?.odometer_done === null ||
+            item?.locations.length % 2 !== 0) && (
             <View style={styles.unFinishTransac}>
               <AppText
                 style={{
@@ -323,7 +325,9 @@ function MapDetailsScreen({ route, navigation }) {
               </>
             )}
           </View>
-          {(item?.odometer_done < 0 || item?.odometer_done === null) && (
+          {(item?.odometer_done < 0 ||
+            item?.odometer_done === null ||
+            item?.locations.length % 2 !== 0) && (
             <View style={{ margin: 10 }}>
               <AppButton
                 title="RESUME"

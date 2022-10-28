@@ -125,6 +125,7 @@ function DashboardScreen({ navigation }) {
   }, []);
 
   const handleLogout = () => {
+    setOffScan(false);
     setUser(null);
     setToken(null);
     authStorage.removeToken();
@@ -136,6 +137,7 @@ function DashboardScreen({ navigation }) {
 
   const handleRefresh = async () => {
     try {
+      setOffScan(false);
       setPage(1);
       setLoading(true);
       setTrips([]);

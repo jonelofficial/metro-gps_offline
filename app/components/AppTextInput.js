@@ -19,6 +19,7 @@ function AppTextInput({
   onBlur,
   error,
   disabled,
+  defaultValue,
   ...otherProps
 }) {
   const [click, setClick] = useState(false);
@@ -39,6 +40,7 @@ function AppTextInput({
           onBlur={(onBlur && onBlur, () => setClick(false))}
           editable={disabled}
           selectTextOnFocus={disabled}
+          defaultValue={defaultValue}
           {...otherProps}
         />
         {secIcon && (

@@ -26,6 +26,7 @@ function AppContext({ children }) {
   const [currentLocation, setCurrentLocation] = useState();
   const [locationPermission, setLocationPermission] = useState(false);
   const [offScan, setOffScan] = useState(false);
+  const [odometer, setOdometer] = useState();
 
   const [offlineVehicles, setOfflineVehicles] = useState();
   const [offlineGasStations, setOfflineGasStations] = useState();

@@ -12,7 +12,7 @@ export const transpoDetailsSchema = Yup.object().shape({
   // odometer_image_path: Yup.string().required().label("Odometer Picture"),
   // odometer_image_path: Yup.object().required().label("Odometer Picture"),
   odometer_image_path: Yup.string().label("Odometer Picture"),
-  companion: Yup.string().required().label("Companion"),
+  companion: Yup.string().label("Companion"),
 });
 
 // SCAN SCREEN
