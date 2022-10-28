@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import getPathLength from "geolib/es/getPathLength";
 
 import { transpoDetailsSchema } from "../../config/schema";
 import { createTrip, getVehicleTrip } from "../../api/office/TripApi";
@@ -27,10 +28,11 @@ import Spacer from "../../components/Spacer";
 import routes from "../../navigation/routes";
 
 function TranspoDetailsScreen({ navigation, route }) {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [imageUri, setImageUri] = useState(null);
   const [vehicleInfo, setVehicleInfo] = useState(null);
   const [odometer, setOdometer] = useState();
+  const [estimatedOdo, setEstimatedOdo] = useState();
   const { user, token, setOfflineTrips, offlineTrips, noInternet } =
     useContext(AuthContext);
 
@@ -46,18 +48,31 @@ function TranspoDetailsScreen({ navigation, route }) {
           token
         );
         setOdometer(vehicleTrip);
+        const meter = getPathLength(vehicleTrip?.data.points);
+        const km = meter / 1000;
+
+        // parseInt(km.toFixed(0))
+        setEstimatedOdo(parseFloat(km.toFixed(1)) + vehicleTrip?.data.odometer);
       })();
 
       setVehicleInfo(route.params.params.vehicle_id);
     }
+    setLoading(false);
   }, [route.params]);
 
   useEffect(() => {
     if (odometer?.data) {
       clearErrors("odometer");
-      setValue("odometer", odometer.data.odometer);
+      setValue("odometer", estimatedOdo);
     }
-  }, [odometer]);
+  }, [estimatedOdo]);
+
+  // useEffect(() => {
+  //   if (odometer?.data) {
+  //     clearErrors("odometer");
+  //     setValue("odometer", estimatedOdo);
+  //   }
+  // }, [odometer]);
 
   const methods = useForm({
     resolver: yupResolver(transpoDetailsSchema),
@@ -136,23 +151,22 @@ function TranspoDetailsScreen({ navigation, route }) {
             </View>
             <View
               style={{
-                flexDirection: "row",
                 justifyContent: "flex-start",
-                alignItems: "center",
               }}
             >
-              <AppText style={styles.formLabel}>Odometer: </AppText>
               <AppText
                 style={{
                   color: colors.lightMedium,
                   fontSize: 13,
-                  width: "60%",
+                  flexWrap: "wrap",
+                  marginBottom: 10,
                 }}
               >
                 {odometer?.data
-                  ? `Auto fill if not match on actual odometer report to immediate supervisor`
+                  ? `If the autofill does not match the actual odometer, please edit based on the actual odometer.`
                   : null}
               </AppText>
+              <AppText style={styles.formLabel}>Odometer: </AppText>
             </View>
             <AppFormField
               containerStyle={{ backgroundColor: colors.primary }}
@@ -160,8 +174,9 @@ function TranspoDetailsScreen({ navigation, route }) {
               name="odometer"
               placeholder="Input current odometer"
               keyboardType="numeric"
-              defaultValue={odometer?.data ? `${odometer.data.odometer}` : null}
-              disabled={odometer?.data ? false : true}
+              defaultValue={estimatedOdo ? `${estimatedOdo}` : null}
+              // defaultValue={odometer?.data ? `${odometer.data.odometer}` : null}
+              // disabled={odometer?.data ? false : true}
             />
             <Spacer />
             <AppText style={styles.formLabel}>Odometer Picture:</AppText>

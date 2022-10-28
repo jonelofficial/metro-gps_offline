@@ -116,7 +116,7 @@ function ListItem({ onPress, item, setOffScan }) {
                 },
               ]}
             >
-              {meter < 1000 ? meter : km.toFixed(0)} {meter < 1000 ? "m" : "km"}
+              {meter < 1000 ? meter : km.toFixed(1)} {meter < 1000 ? "m" : "km"}
             </AppText>
             <View style={styles.hrWrapper}>
               <AppText style={[styles.kmph]}>
