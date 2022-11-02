@@ -48,16 +48,19 @@ function TranspoDetailsScreen({ navigation, route }) {
           token
         );
         setOdometer(vehicleTrip);
-        const meter = getPathLength(vehicleTrip?.data.points);
-        const km = meter / 1000;
+        if (vehicleTrip.data?.points) {
+          const meter = getPathLength(vehicleTrip.data?.points);
+          const km = meter / 1000;
 
-        // parseInt(km.toFixed(0))
-        setEstimatedOdo(parseFloat(km.toFixed(1)) + vehicleTrip?.data.odometer);
+          setEstimatedOdo(
+            parseFloat(km.toFixed(1)) + vehicleTrip.data?.odometer
+          );
+        }
+        setLoading(false);
       })();
 
       setVehicleInfo(route.params.params.vehicle_id);
     }
-    setLoading(false);
   }, [route.params]);
 
   useEffect(() => {
@@ -154,18 +157,20 @@ function TranspoDetailsScreen({ navigation, route }) {
                 justifyContent: "flex-start",
               }}
             >
-              <AppText
-                style={{
-                  color: colors.lightMedium,
-                  fontSize: 13,
-                  flexWrap: "wrap",
-                  marginBottom: 10,
-                }}
-              >
-                {odometer?.data
-                  ? `If the autofill does not match the actual odometer, please edit based on the actual odometer.`
-                  : null}
-              </AppText>
+              {odometer?.data && (
+                <AppText
+                  style={{
+                    color: colors.lightMedium,
+                    fontSize: 13,
+                    flexWrap: "wrap",
+                    marginBottom: 10,
+                  }}
+                >
+                  If the autofill does not match the actual odometer, please
+                  edit based on the actual odometer.
+                </AppText>
+              )}
+
               <AppText style={styles.formLabel}>Odometer: </AppText>
             </View>
             <AppFormField
