@@ -12,7 +12,8 @@ export const transpoDetailsSchema = Yup.object().shape({
   // odometer_image_path: Yup.string().required().label("Odometer Picture"),
   // odometer_image_path: Yup.object().required().label("Odometer Picture"),
   odometer_image_path: Yup.string().label("Odometer Picture"),
-  companion: Yup.string().label("Companion"),
+  // companion: Yup.string().label("Companion"),
+  // others: Yup.string().label("Others"),
 });
 
 // SCAN SCREEN
@@ -41,7 +42,7 @@ export const mapGasSchema = Yup.object().shape({
 // MAP SCREEN
 export const mapDoneSchema = Yup.object().shape({
   odometer_done: Yup.string()
-    .matches(/^[0-9]+$/, "Must be only digits")
+    .matches(/^\d*\.?(?:\d{1,9})?$/, "Must be only digits")
     .required()
     .label("Odometer"),
 });

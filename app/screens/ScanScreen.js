@@ -8,7 +8,6 @@ import ViewFinder from "react-native-view-finder";
 import { useLogin } from "../api/LoginApi";
 import { vehicleIdSchema } from "../config/schema";
 import { getVehicle } from "../api/VehicleApi";
-import { BASEURL } from "@env";
 import AppText from "../components/AppText";
 import AuthContext from "../auth/context";
 import defaultStyle from "../config/styles";
@@ -126,6 +125,12 @@ function ScanScreen() {
             }, 1000);
           } else {
             const loginRes = await useLogin(json);
+            if (loginRes?.message) {
+              setIsLoading(false);
+              setQrData(null);
+              setScanned(true);
+              return alert(loginRes.message);
+            }
             logIn(loginRes);
             authStorage.storeToken(loginRes);
           }
@@ -148,7 +153,7 @@ function ScanScreen() {
     } catch (e) {
       setIsLoading(false);
       setScanned(true);
-      alert("Sorry, can't read the QR code.\nPlease use manual instead.");
+      alert("Sorry, can't read the QR code.");
       alert(`SCAN ERROR: ${e}`);
     }
   };

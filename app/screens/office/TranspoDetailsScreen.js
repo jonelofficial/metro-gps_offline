@@ -26,6 +26,7 @@ import SubmitButton from "../../components/forms/SubmitButton";
 import Screen from "../../components/Screen";
 import Spacer from "../../components/Spacer";
 import routes from "../../navigation/routes";
+import Scanner from "../../components/Scanner";
 
 function TranspoDetailsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
@@ -33,6 +34,16 @@ function TranspoDetailsScreen({ navigation, route }) {
   const [vehicleInfo, setVehicleInfo] = useState(null);
   const [odometer, setOdometer] = useState();
   const [estimatedOdo, setEstimatedOdo] = useState();
+
+  // SCANNER
+  const [scanned, setScanned] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [companion, setCompanion] = useState([]);
+  const [others, setOthers] = useState([]);
+  const [isCompanion, setIsCompanion] = useState(false);
+  const [isOthers, setIsOthers] = useState(false);
+
+  //
   const { user, token, setOfflineTrips, offlineTrips, noInternet } =
     useContext(AuthContext);
 
@@ -142,6 +153,42 @@ function TranspoDetailsScreen({ navigation, route }) {
     }
   };
 
+  const handleBarCodeScanned = async ({ type, data }) => {
+    try {
+      if (isCompanion) {
+        setIsCompanion(true);
+        setIsLoading(true);
+        const json = await JSON.parse(data);
+        if (json.first_name) {
+          firstName = json.first_name;
+          setCompanion((prevState) => [...prevState, { firstName: firstName }]);
+        } else {
+          alert("QR code not valid. Use ID QR code");
+        }
+        setIsCompanion(false);
+        setIsLoading(false);
+      } else {
+        setIsOthers(true);
+        setIsLoading(true);
+        const json = await JSON.parse(data);
+        if (json.first_name) {
+          firstName = json.first_name;
+          setOthers((prevState) => [...prevState, { firstName: firstName }]);
+        } else {
+          alert("QR code not valid. Use ID QR code");
+        }
+        setIsOthers(false);
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.log("ERROR SCANNER: ", error);
+      alert("Invalid QR code. Please use ID qr code");
+    }
+  };
+  const handleDelete = (i) => {
+    console.log(i);
+    companion.slice(i, companion.length);
+  };
   return (
     <>
       <KeyboardAwareScrollView>
@@ -231,15 +278,83 @@ function TranspoDetailsScreen({ navigation, route }) {
             <Spacer />
 
             <AppText style={styles.formLabel}>Companion:</AppText>
-            <AppFormField
-              containerStyle={{ backgroundColor: colors.primary }}
-              style={{ textAlignVertical: "top", color: colors.white }}
+            {companion.map((item, i) => {
+              return (
+                <View id={i} style={{ marginBottom: 5, flexDirection: "row" }}>
+                  <AppText
+                    style={{
+                      fontSize: 16,
+                      textTransform: "capitalize",
+                      marginRight: 10,
+                    }}
+                  >
+                    {item.firstName}
+                  </AppText>
+                  <TouchableOpacity onPress={() => handleDelete(i)}>
+                    <Ionicons
+                      name={"close-circle"}
+                      size={20}
+                      color={colors.danger}
+                    />
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+            <TouchableOpacity onPress={() => setIsCompanion(true)}>
+              <AppText style={styles.link}>Add Companion</AppText>
+            </TouchableOpacity>
+            {/* <AppFormField
+              containerStyle={{
+                // backgroundColor: colors.primary,
+                display: "none",
+              }}
+              // style={{ textAlignVertical: "top", color: colors.white }}
               name="companion"
               placeholder="Input companion"
-              maxLength={255}
-              numberOfLines={4}
-              multiline
-            />
+              // maxLength={255}
+              // numberOfLines={4}
+              // multiline
+            /> */}
+            <Spacer />
+
+            <AppText style={styles.formLabel}>Others:</AppText>
+            {others.map((item, i) => {
+              return (
+                <View id={i} style={{ marginBottom: 5, flexDirection: "row" }}>
+                  <AppText
+                    style={{
+                      fontSize: 16,
+                      textTransform: "capitalize",
+                      marginRight: 10,
+                    }}
+                  >
+                    {item.firstName}
+                  </AppText>
+                  <TouchableOpacity>
+                    <Ionicons
+                      name={"close-circle"}
+                      size={20}
+                      color={colors.danger}
+                    />
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
+            <TouchableOpacity onPress={() => setIsOthers(true)}>
+              <AppText style={styles.link}>Add Others Companion</AppText>
+            </TouchableOpacity>
+            {/* <AppFormField
+              containerStyle={{
+                // backgroundColor: colors.primary,
+                display: "none",
+              }}
+              // style={{ textAlignVertical: "top", color: colors.white }}
+              name="others"
+              placeholder="Input others companion"
+              // maxLength={255}
+              // numberOfLines={2}
+              // multiline
+            /> */}
             <Spacer />
             <SubmitButton
               title={user.trip_template === "office" ? "Drive" : "Next"}
@@ -252,6 +367,17 @@ function TranspoDetailsScreen({ navigation, route }) {
       {loading === true && (
         <View style={styles.container}>
           <ActivityIndicator visible={true} />
+        </View>
+      )}
+      {(isCompanion || isOthers) && (
+        <View style={styles.container}>
+          <Scanner
+            handleBarCodeScanned={handleBarCodeScanned}
+            scanned={scanned}
+            setScanned={setScanned}
+            isLoading={isLoading}
+            setIsLoading={setIsLoading}
+          />
         </View>
       )}
     </>
@@ -303,6 +429,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
+  },
+  link: {
+    fontWeight: "normal",
+    fontSize: 14,
+    color: colors.primary,
   },
 });
 
