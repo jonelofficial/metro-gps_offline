@@ -40,6 +40,7 @@ import routes from "../../navigation/routes";
 import GasModal from "../../components/modals/GasModal";
 import ArrivedModal from "../../components/modals/ArrivedModal";
 import DoneModal from "../../components/modals/DoneModal";
+import getPathLength from "geolib/es/getPathLength";
 
 function MapScreen({ route, navigation }) {
   const [trip, setTrip] = useState();
@@ -64,6 +65,7 @@ function MapScreen({ route, navigation }) {
   // DONE MODAL
   const [doneModal, setDoneModal] = useState(false);
   const [doneLoading, setDoneLoading] = useState(false);
+  const [estimatedOdo, setEstimatedOdo] = useState();
 
   //Context
   const {
@@ -109,7 +111,11 @@ function MapScreen({ route, navigation }) {
     resolver: yupResolver(mapDoneSchema),
     mode: "onSubmit",
   });
-  const { reset: doneReset } = methodDone;
+  const {
+    reset: doneReset,
+    clearErrors: clearError,
+    setValue: setOdoValue,
+  } = methodDone;
 
   // GAS FORM
   const method = useForm({
@@ -182,6 +188,12 @@ function MapScreen({ route, navigation }) {
           longitude: currentLocation.longitude,
         },
       ]);
+    }
+    if (trip) {
+      const meter = getPathLength(points);
+      const km = meter / 1000;
+
+      setEstimatedOdo(parseFloat(km.toFixed(1)) + trip.odometer);
     }
   }, [currentLocation]);
 
@@ -364,13 +376,12 @@ function MapScreen({ route, navigation }) {
     setGasLoading(false);
     handleSuccess();
   };
-
   // END THE TRIP TRANSACTION WITH DONE ODOMETER AND LAST POINTS ROUTE
   const handleDoneButton = async (vehicle_data) => {
     try {
       Keyboard.dismiss();
       setDoneLoading(true);
-      if (trip.odometer >= vehicle_data.odometer_done) {
+      if (trip.odometer > vehicle_data.odometer_done) {
         alert(
           `Odometer done is less than or equal with the previous odometer. ("${trip.odometer}" last odometer)`
         );
@@ -761,11 +772,14 @@ function MapScreen({ route, navigation }) {
 
       {/* DONE MODAL */}
       <DoneModal
+        defaultValue={estimatedOdo}
         doneModal={doneModal}
         setDoneModal={setDoneModal}
         methodDone={methodDone}
         handleDoneButton={handleDoneButton}
         doneLoading={doneLoading}
+        clearErrors={clearError}
+        setValue={setOdoValue}
       />
     </>
   );

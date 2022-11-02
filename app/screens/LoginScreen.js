@@ -1,6 +1,12 @@
 import { useContext, useEffect, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Keyboard,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { yupResolver } from "@hookform/resolvers/yup";
 
 import { loginSchema } from "../config/schema";
@@ -60,6 +66,7 @@ function LoginScreen({ navigation }) {
 
   const onSubmit = async (user) => {
     try {
+      Keyboard.dismiss();
       setLoading(true);
 
       const data = await useLogin(user);
@@ -68,7 +75,8 @@ function LoginScreen({ navigation }) {
         return alert(`${data.message}`);
       }
 
-      const vehicles = await getVehicles(process.env.ADMIN_TOKEN);
+      // const vehicles = await getVehicles(process.env.ADMIN_TOKEN);
+      const vehicles = await getVehicles();
 
       if (vehicles.data) {
         // Handle store and update vehicles master list to local storage
@@ -114,7 +122,8 @@ function LoginScreen({ navigation }) {
         // End
       }
 
-      const gasStation = await getGasStation(process.env.ADMIN_TOKEN);
+      // const gasStation = await getGasStation(process.env.ADMIN_TOKEN);
+      const gasStation = await getGasStation();
 
       if (gasStation.data) {
         // Handle store and update gas station master list to local storage
@@ -154,7 +163,7 @@ function LoginScreen({ navigation }) {
       setLoading(false);
     }
   };
-  if (loading) return <SyncingIndicator visible={true} />;
+  // if (loading) return <SyncingIndicator visible={true} />;
 
   return (
     <Screen style={styles.screen}>
@@ -198,6 +207,11 @@ function LoginScreen({ navigation }) {
           <SubmitButton title="Sign In" />
         </FormProvider>
       </View>
+      {loading && (
+        <View style={styles.container}>
+          <SyncingIndicator visible={true} />
+        </View>
+      )}
     </Screen>
   );
 }
@@ -230,6 +244,14 @@ const styles = StyleSheet.create({
   scanID: {
     fontFamily: fonts.primaryName,
     color: colors.primary,
+  },
+  container: {
+    position: "absolute",
+    backgroundColor: "white",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
 });
 
