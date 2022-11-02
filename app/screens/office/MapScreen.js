@@ -372,7 +372,7 @@ function MapScreen({ route, navigation }) {
       setDoneLoading(true);
       if (trip.odometer >= vehicle_data.odometer_done) {
         alert(
-          `Odometer done is less than or equal with the previous odometer. (${trip.odometer} Last Odometer)`
+          `Odometer done is less than or equal with the previous odometer. ("${trip.odometer}" last odometer)`
         );
         return setDoneLoading(false);
       }
