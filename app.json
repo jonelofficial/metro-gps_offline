@@ -6,6 +6,9 @@
     "orientation": "portrait",
     "icon": "./app/assets/icon.png",
     "userInterfaceStyle": "automatic",
+    "notification":{
+      "iosDisplayInForeground": true
+    },
     "splash": {
       "image": "./app/assets/splash.png",
       "backgroundColor": "#ffffff",

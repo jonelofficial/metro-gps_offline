@@ -15,6 +15,7 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { useStopwatch } from "react-timer-hook";
 import { useForm } from "react-hook-form";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as Notifications from "expo-notifications";
 
 import {
   mapArrviedSchema,
@@ -150,16 +151,26 @@ function MapScreen({ route, navigation }) {
 
   useEffect(() => {
     (async () => {
+      Notifications.setNotificationHandler({
+        handleNotification: async () => {
+          return {
+            shouldShowAlert: true,
+            shouldPlaySound: true,
+            shouldSetBadge: true,
+          };
+        },
+      });
+
       setOffScan(false);
       if (!noInternet) {
-        // await fetchGasStation();
+        await fetchGasStation();
         const trip_id = await route.params.trip._id;
         setTrip(route.params.trip);
         route.params.trip.locations.length <= 0 &&
           (await handleLeftButton(trip_id));
       } else {
         try {
-          // await fetchGasStation();
+          await fetchGasStation();
           await handleOfflineLeft();
         } catch (error) {
           alert(`USEEFFECT OFFLINE ERROR: ${error}`);
@@ -189,13 +200,16 @@ function MapScreen({ route, navigation }) {
         },
       ]);
     }
+  }, [currentLocation]);
+
+  useEffect(() => {
     if (trip) {
       const meter = getPathLength(points);
       const km = meter / 1000;
 
       setEstimatedOdo(parseFloat(km.toFixed(1)) + trip.odometer);
     }
-  }, [currentLocation]);
+  }, [trip]);
 
   useEffect(() => {
     // HANDLE BACK
@@ -213,7 +227,8 @@ function MapScreen({ route, navigation }) {
   };
 
   // APPSTATE
-  const _handleAppStateChange = (nextAppState) => {
+  const _handleAppStateChange = async (nextAppState) => {
+    let notif;
     if (nextAppState === "background") {
       const newTripObj = {
         dataObj: {
@@ -224,6 +239,21 @@ function MapScreen({ route, navigation }) {
         id: trip?._id,
       };
       cache.store(user.userId, newTripObj);
+
+      const content = {
+        title: `Fresh Morning ${
+          user.first_name[0].toUpperCase() +
+          user.first_name.substring(1).toLowerCase()
+        } `,
+        body: "You have an existing transaction. Please go back to the Metro app and finish it.",
+      };
+
+      notif = Notifications.scheduleNotificationAsync({
+        content,
+        trigger: { seconds: 60 },
+      });
+    } else {
+      await Notifications.cancelAllScheduledNotificationsAsync(notif);
     }
   };
 

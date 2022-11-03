@@ -29,6 +29,7 @@ import Screen from "../components/Screen";
 import SearchBar from "../components/SearchBar";
 import Spacer from "../components/Spacer";
 import { BASEURL } from "@env";
+import * as Notifications from "expo-notifications";
 
 import routes from "../navigation/routes";
 import { selectTable } from "../utility/sqlite";
@@ -55,7 +56,7 @@ function DashboardScreen({ navigation }) {
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
 
-  const { token, user, setUser, setToken } = useContext(AuthContext);
+  const { token, user, setUser, setToken, offScan } = useContext(AuthContext);
 
   const fetchTrip = async () => {
     try {
@@ -100,6 +101,16 @@ function DashboardScreen({ navigation }) {
   useEffect(() => {
     ToastAndroid.show(`Syncing`, ToastAndroid.SHORT);
 
+    Notifications.setNotificationHandler({
+      handleNotification: async () => {
+        return {
+          shouldShowAlert: true,
+          shouldPlaySound: true,
+          shouldSetBadge: true,
+        };
+      },
+    });
+
     setImage(user.profile ? `${BASEURL}/${user.profile}` : null);
     // Handle if have an unsave trip from map screen
     (async () => {
@@ -123,6 +134,28 @@ function DashboardScreen({ navigation }) {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (offScan) {
+      const content = {
+        title: `Fresh Morning ${
+          user.first_name[0].toUpperCase() +
+          user.first_name.substring(1).toLowerCase()
+        } `,
+        body: "You have an unfinished trip. Please resume it or report to your immediate supervisor",
+      };
+
+      Notifications.scheduleNotificationAsync({
+        content,
+        trigger: null,
+      });
+
+      // Notifications.scheduleNotificationAsync({
+      //   content,
+      //   trigger: { seconds: 2 },
+      // });
+    }
+  }, [offScan]);
 
   const handleLogout = () => {
     setOffScan(false);
