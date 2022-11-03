@@ -257,7 +257,10 @@ function MapDetailsScreen({ route, navigation }) {
                 <AppText>Total Gas: {item.diesels.length}</AppText>
                 <AppText>Odometer Out: {item.odometer}</AppText>
                 <AppText>Odometer Done: {item.odometer_done}</AppText>
-                <AppText>Companion: {item.companion}</AppText>
+                <AppText>Companion:</AppText>
+                {item.companion.map((com, i) => {
+                  return <AppText key={i}>{com.firstName}</AppText>;
+                })}
               </>
             ) : !gasData ? (
               <>
@@ -313,12 +316,17 @@ function MapDetailsScreen({ route, navigation }) {
                   Date:{" "}
                   {dayjs(gasData.createdAt).format("YYYY-MM-DD | hh:mm A")}
                 </AppText>
-                {/* <AppText>
-                  Gas Station:
+                <AppText>
+                  Gas Station:{" "}
                   {gasStation.map((item) => {
-                    return item.value === gasData.gas_station;
+                    if (item.value === gasData.gas_station_id) {
+                      return item.label;
+                    }
                   })}
-                </AppText> */}
+                  {gasData?.gas_station_name &&
+                    gasData.gas_station_name !== "null" &&
+                    ` (${gasData.gas_station_name})`}
+                </AppText>
                 <AppText>Liter: {gasData.liter}</AppText>
                 <AppText>Odometer: {gasData.odometer}</AppText>
                 <AppText>Amount: {gasData.amount}</AppText>

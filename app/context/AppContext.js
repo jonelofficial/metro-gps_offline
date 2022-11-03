@@ -4,6 +4,7 @@ import { useKeepAwake } from "expo-keep-awake";
 import * as SplashScreen from "expo-splash-screen";
 import * as MediaLibrary from "expo-media-library";
 import * as Location from "expo-location";
+import * as Notifications from "expo-notifications";
 import jwtDecode from "jwt-decode";
 
 import { Alert, Dimensions, Linking, LogBox, ToastAndroid } from "react-native";
@@ -65,7 +66,13 @@ function AppContext({ children }) {
         const { status } = await Camera.requestCameraPermissionsAsync();
         const res = await MediaLibrary.requestPermissionsAsync();
         const { granted } = await Location.requestForegroundPermissionsAsync();
-        if (status === "granted" && res.status === "granted" && granted) {
+        const notif = await Notifications.requestPermissionsAsync();
+        if (
+          status === "granted" &&
+          res.status === "granted" &&
+          granted &&
+          notif.granted
+        ) {
           setLocationPermission(true);
           restoreUser();
           watch_location();
@@ -76,6 +83,8 @@ function AppContext({ children }) {
               status === "denied" ? "CAMERA " : ""
             }${res.status === "denied" ? "MEDIA LIBRARY " : ""}${
               !granted ? "LOCATION" : ""
+            }${
+              !!notif.granted ? "NOTIFICATION" : ""
             } to run the app.\n \nGo to phone setting > Application > Metro GPS > Permission or click OPEN PERMISSION then restart app. Thank you`,
             [
               { text: "OK", onPress: () => null, style: "cancel" },

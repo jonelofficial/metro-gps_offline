@@ -81,13 +81,6 @@ function TranspoDetailsScreen({ navigation, route }) {
     }
   }, [estimatedOdo]);
 
-  // useEffect(() => {
-  //   if (odometer?.data) {
-  //     clearErrors("odometer");
-  //     setValue("odometer", estimatedOdo);
-  //   }
-  // }, [odometer]);
-
   const methods = useForm({
     resolver: yupResolver(transpoDetailsSchema),
     mode: "onTouched",
@@ -115,7 +108,10 @@ function TranspoDetailsScreen({ navigation, route }) {
       // });
       form.append("vehicle_id", vehicleInfo.id);
       form.append("odometer", data.odometer);
-      form.append("companion", data.companion);
+      form.append("companion", JSON.stringify(companion));
+      form.append("others", data.others);
+
+      console.log(form);
 
       if (noInternet) {
         const newObj = {
@@ -148,6 +144,7 @@ function TranspoDetailsScreen({ navigation, route }) {
             trip: tripData,
           });
     } catch (error) {
+      console.log(error);
       setLoading(false);
       alert(`ERROR: ${error}`);
     }
@@ -159,8 +156,9 @@ function TranspoDetailsScreen({ navigation, route }) {
         setIsCompanion(true);
         setIsLoading(true);
         const json = await JSON.parse(data);
+
         if (json.first_name) {
-          firstName = json.first_name;
+          const firstName = json.first_name;
           setCompanion((prevState) => [...prevState, { firstName: firstName }]);
         } else {
           alert("QR code not valid. Use ID QR code");
@@ -172,7 +170,7 @@ function TranspoDetailsScreen({ navigation, route }) {
         setIsLoading(true);
         const json = await JSON.parse(data);
         if (json.first_name) {
-          firstName = json.first_name;
+          const firstName = json.first_name;
           setOthers((prevState) => [...prevState, { firstName: firstName }]);
         } else {
           alert("QR code not valid. Use ID QR code");
@@ -182,12 +180,16 @@ function TranspoDetailsScreen({ navigation, route }) {
       }
     } catch (error) {
       console.log("ERROR SCANNER: ", error);
+      setIsLoading(false);
+      setScanned(true);
       alert("Invalid QR code. Please use ID qr code");
     }
   };
-  const handleDelete = (i) => {
-    console.log(i);
-    companion.slice(i, companion.length);
+  const handleCompanionDelete = (i) => {
+    companion.splice(i, 1);
+  };
+  const handleOthersDelete = (i) => {
+    others.splice(i, 1);
   };
   return (
     <>
@@ -280,7 +282,7 @@ function TranspoDetailsScreen({ navigation, route }) {
             <AppText style={styles.formLabel}>Companion:</AppText>
             {companion.map((item, i) => {
               return (
-                <View id={i} style={{ marginBottom: 5, flexDirection: "row" }}>
+                <View key={i} style={{ marginBottom: 5, flexDirection: "row" }}>
                   <AppText
                     style={{
                       fontSize: 16,
@@ -290,7 +292,7 @@ function TranspoDetailsScreen({ navigation, route }) {
                   >
                     {item.firstName}
                   </AppText>
-                  <TouchableOpacity onPress={() => handleDelete(i)}>
+                  <TouchableOpacity onPress={() => handleCompanionDelete(i)}>
                     <Ionicons
                       name={"close-circle"}
                       size={20}
@@ -303,24 +305,24 @@ function TranspoDetailsScreen({ navigation, route }) {
             <TouchableOpacity onPress={() => setIsCompanion(true)}>
               <AppText style={styles.link}>Add Companion</AppText>
             </TouchableOpacity>
-            {/* <AppFormField
-              containerStyle={{
-                // backgroundColor: colors.primary,
-                display: "none",
-              }}
-              // style={{ textAlignVertical: "top", color: colors.white }}
-              name="companion"
-              placeholder="Input companion"
-              // maxLength={255}
-              // numberOfLines={4}
-              // multiline
-            /> */}
+
             <Spacer />
 
             <AppText style={styles.formLabel}>Others:</AppText>
-            {others.map((item, i) => {
+            <AppFormField
+              containerStyle={{
+                backgroundColor: colors.primary,
+              }}
+              style={{ textAlignVertical: "top", color: colors.white }}
+              name="others"
+              placeholder="Input others companion"
+              maxLength={255}
+              numberOfLines={2}
+              multiline
+            />
+            {/* {others.map((item, i) => {
               return (
-                <View id={i} style={{ marginBottom: 5, flexDirection: "row" }}>
+                <View key={i} style={{ marginBottom: 5, flexDirection: "row" }}>
                   <AppText
                     style={{
                       fontSize: 16,
@@ -330,7 +332,7 @@ function TranspoDetailsScreen({ navigation, route }) {
                   >
                     {item.firstName}
                   </AppText>
-                  <TouchableOpacity>
+                  <TouchableOpacity onPress={() => handleOthersDelete(i)}>
                     <Ionicons
                       name={"close-circle"}
                       size={20}
@@ -342,19 +344,8 @@ function TranspoDetailsScreen({ navigation, route }) {
             })}
             <TouchableOpacity onPress={() => setIsOthers(true)}>
               <AppText style={styles.link}>Add Others Companion</AppText>
-            </TouchableOpacity>
-            {/* <AppFormField
-              containerStyle={{
-                // backgroundColor: colors.primary,
-                display: "none",
-              }}
-              // style={{ textAlignVertical: "top", color: colors.white }}
-              name="others"
-              placeholder="Input others companion"
-              // maxLength={255}
-              // numberOfLines={2}
-              // multiline
-            /> */}
+            </TouchableOpacity> */}
+
             <Spacer />
             <SubmitButton
               title={user.trip_template === "office" ? "Drive" : "Next"}

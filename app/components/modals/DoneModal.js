@@ -47,26 +47,24 @@ const DoneModal = ({
           <Spacer />
 
           <FormProvider {...methodDone} onSubmit={handleDoneButton}>
-            {defaultValue && (
-              <AppText
-                style={{
-                  color: colors.lightMedium,
-                  fontSize: 12,
-                  flexWrap: "wrap",
-                  marginBottom: 10,
-                }}
-              >
-                If the autofill does not match the actual odometer, please edit
-                based on the actual odometer.
-              </AppText>
-            )}
+            <AppText
+              style={{
+                color: colors.lightMedium,
+                fontSize: 12,
+                flexWrap: "wrap",
+                marginBottom: 10,
+              }}
+            >
+              If the autofill does not match the actual odometer, please edit
+              based on the actual odometer.
+            </AppText>
             <AppText style={{ marginBottom: 5 }}>Vehicle Odometer:</AppText>
 
             <AppFormField
               name="odometer_done"
               placeholder="Input vehicle odometer"
               keyboardType="numeric"
-              defaultValue={defaultValue ? `${defaultValue}` : null}
+              defaultValue={defaultValue ? `${defaultValue.toFixed(1)}` : null}
             />
             <Spacer />
 
