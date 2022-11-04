@@ -1,4 +1,11 @@
-import { Button, Dimensions, StyleSheet, View } from "react-native";
+import {
+  Alert,
+  BackHandler,
+  Button,
+  Dimensions,
+  StyleSheet,
+  View,
+} from "react-native";
 import React, { useEffect, useState } from "react";
 import Screen from "./Screen";
 import defaultStyle from "../config/styles";
@@ -12,15 +19,38 @@ const Scanner = ({
   setScanned,
   isLoading,
   setIsLoading,
+  navigation,
 }) => {
   const { height, width } = Dimensions.get("screen");
   const [hasPermission, setHasPermission] = useState(null);
+
+  const backAction = () => {
+    Alert.alert("Hold on!", "Are you sure you want to go back?", [
+      {
+        text: "Cancel",
+        onPress: () => null,
+        style: "cancel",
+      },
+      {
+        text: "YES",
+        onPress: () => navigation(false),
+      },
+    ]);
+    return true;
+  };
 
   useEffect(() => {
     (async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
       setHasPermission(status === "granted");
     })();
+  }, []);
+
+  useEffect(() => {
+    // HANDLE BACK
+    BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () =>
+      BackHandler.removeEventListener("hardwareBackPress", backAction);
   }, []);
 
   if (hasPermission === null) {
