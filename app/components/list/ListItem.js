@@ -47,8 +47,8 @@ function ListItem({ onPress, item, setOffScan }) {
   const km = meter / 1000;
 
   //  Getting TIME
-
-  const minute = newMinutes;
+  const finalHours = newHours * 60;
+  const minute = newMinutes - finalHours;
 
   const hour = `${newHours}.${minute == 0 ? "00" : minute}`;
 
