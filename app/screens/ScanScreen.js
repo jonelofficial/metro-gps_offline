@@ -129,10 +129,11 @@ function ScanScreen() {
               setIsLoading(false);
               setQrData(null);
               setScanned(true);
-              return alert(loginRes.message);
+              alert(loginRes.message);
+            } else {
+              logIn(loginRes);
+              authStorage.storeToken(loginRes);
             }
-            logIn(loginRes);
-            authStorage.storeToken(loginRes);
           }
         } catch (error) {
           setScanned(true);
@@ -209,12 +210,14 @@ function ScanScreen() {
         <View style={[styles.container]}>
           <BarCodeScanner
             onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-            ratio="16:9"
+            // ratio="16:9"
             style={[
               StyleSheet.absoluteFillObject,
               {
                 width: width * 1.8,
                 height: height * 1.1,
+                position: "absolute",
+                left: "-30%",
               },
             ]}
           />
@@ -251,9 +254,10 @@ function ScanScreen() {
 }
 
 const styles = StyleSheet.create({
-  screen: { backgroundColor: defaultStyle.colors.black },
+  // screen: { backgroundColor: defaultStyle.colors.black },
   container: {
     flex: 1,
+    position: "relative",
     justifyContent: "center",
     alignItems: "center",
   },
