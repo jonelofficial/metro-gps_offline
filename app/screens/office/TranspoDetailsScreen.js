@@ -43,6 +43,8 @@ function TranspoDetailsScreen({ navigation, route }) {
   const [isCompanion, setIsCompanion] = useState(false);
   const [isOthers, setIsOthers] = useState(false);
 
+  // TIMER
+
   //
   const { user, token, setOfflineTrips, offlineTrips, noInternet } =
     useContext(AuthContext);
@@ -101,11 +103,11 @@ function TranspoDetailsScreen({ navigation, route }) {
       let tripData;
 
       const form = new FormData();
-      form.append("image", {
-        name: new Date() + "_odometer",
-        uri: data.odometer_image_path?.uri,
-        type: "image/jpg",
-      });
+      // form.append("image", {
+      //   name: new Date() + "_odometer",
+      //   uri: data.odometer_image_path?.uri,
+      //   type: "image/jpg",
+      // });
       form.append("vehicle_id", vehicleInfo.id);
       form.append("odometer", data.odometer);
       form.append("companion", JSON.stringify(companion));

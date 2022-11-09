@@ -56,7 +56,8 @@ function DashboardScreen({ navigation }) {
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
 
-  const { token, user, setUser, setToken, offScan } = useContext(AuthContext);
+  const { token, user, setUser, setToken, offScan, noInternet } =
+    useContext(AuthContext);
 
   const fetchTrip = async () => {
     try {
@@ -125,9 +126,13 @@ function DashboardScreen({ navigation }) {
 
         setLoading(true);
 
-        await updateTrip(tripCache.id, tripCache.dataObj, token);
-        await AsyncStorage.removeItem("cache" + user.userId);
-        handleRefresh();
+        if (!noInternet) {
+          const pointsObj = { points: tripCache.points };
+          await updateTrip(tripCache.id, tripCache.dataObj, token);
+          await updateTrip(tripCache.id, pointsObj, token);
+          await AsyncStorage.removeItem("cache" + user.userId);
+          handleRefresh();
+        }
       } catch (error) {
         alert("ERROR ON CACHE: ", error);
         console.log(error);

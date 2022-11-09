@@ -163,11 +163,14 @@ function MapScreen({ route, navigation }) {
 
       setOffScan(false);
       if (!noInternet) {
-        await fetchGasStation();
         const trip_id = await route.params.trip._id;
-        setTrip(route.params.trip);
-        route.params.trip.locations.length <= 0 &&
-          (await handleLeftButton(trip_id));
+        if (route.params.trip?.locations.length <= 0) {
+          await handleLeftButton(trip_id);
+        } else {
+          setTrip(route.params.trip);
+        }
+        route.params.trip?.points && setPoints(route.params.trip.points);
+        await fetchGasStation();
       } else {
         try {
           await fetchGasStation();
@@ -188,10 +191,10 @@ function MapScreen({ route, navigation }) {
     return () => {
       subscription.remove();
     };
-  }, [trip, offlineTrips]);
+  }, [trip, offlineTrips, currentLocation]);
 
   useEffect(() => {
-    if (currentLocation && currentLocation.speed >= 1.4) {
+    if (currentLocation && currentLocation.speed >= 1.2) {
       setPoints((currentValue) => [
         ...currentValue,
         {
@@ -237,6 +240,7 @@ function MapScreen({ route, navigation }) {
           points: points,
         },
         id: trip?._id,
+        trip: trip,
       };
       cache.store(user.userId, newTripObj);
 
@@ -285,7 +289,7 @@ function MapScreen({ route, navigation }) {
   const handleLeftButton = async (trip_id) => {
     try {
       setLeftLoading(true);
-      start(); // for timer
+      start(new Date()); // for timer
       const leftRes = await handleLeft(trip_id);
       setLocationId((currentValue) => [...currentValue, leftRes._id]);
       const newObjt = {
@@ -306,15 +310,27 @@ function MapScreen({ route, navigation }) {
   // ADD ARRIVED LOCATION AND UPDATE POINTS ROUTE ON THE TRIP TRANSACTION
   const handleArrivedButton = async () => {
     try {
+      let newTripID;
+      if (!trip?._id) {
+        (async () => {
+          const tripCache = await cache.get(user.userId);
+          newTripID = newTripID = tripCache.trip._id;
+        })();
+      }
+      pause();
       setArrivedLoading(true);
       // const rightRes = await handleArrived(trip._id, odometer);
-      const rightRes = await handleArrived(trip._id);
+      const rightRes = await handleArrived(!trip?._id ? newTripID : trip._id);
       setLocationId((currentValue) => [...currentValue, rightRes._id]);
       const newObjt = {
         points: points,
       };
 
-      const updateTripRes = await updateTrip(trip._id, newObjt, token);
+      const updateTripRes = await updateTrip(
+        !trip?._id ? newTripID : trip._id,
+        newObjt,
+        token
+      );
       setTrip(updateTripRes.data);
       setArrivedLoading(false);
       handleSuccess();
@@ -410,10 +426,22 @@ function MapScreen({ route, navigation }) {
   const handleDoneButton = async (vehicle_data) => {
     try {
       Keyboard.dismiss();
+      let newTripID;
+      let newTrip;
+      if (!trip?._id) {
+        (async () => {
+          const tripCache = await cache.get(user.userId);
+          newTrip = tripCache.trip;
+          newTripID = tripCache.trip._id;
+        })();
+      }
+
       setDoneLoading(true);
       if (trip.odometer > vehicle_data.odometer_done) {
         alert(
-          `Odometer done is less than or equal with the previous odometer. ("${trip.odometer}" last odometer)`
+          `Odometer done is less than or equal with the previous odometer. ("${
+            !trip?._id ? newTrip.odometer : trip.odometer
+          }" last odometer)`
         );
         return setDoneLoading(false);
       }
@@ -423,7 +451,7 @@ function MapScreen({ route, navigation }) {
         points: points,
       };
 
-      await updateTrip(trip._id, newObjt, token);
+      await updateTrip(!trip?._id ? newTripID : trip._id, newObjt, token);
       doneReset();
       setDoneLoading(false);
       await AsyncStorage.removeItem("cache" + user.userId);
@@ -432,6 +460,7 @@ function MapScreen({ route, navigation }) {
         routes: [{ index: 0, name: routes.DASHBOARD }],
       });
     } catch (error) {
+      setDoneLoading(false);
       alert("ERROR DONE BUTTON");
       console.log("ERROR DONE BUTTON", error);
     }
@@ -512,7 +541,8 @@ function MapScreen({ route, navigation }) {
             >{`Accept Location Permission\n and try again.`}</AppText>
           </View>
         )}
-        {currentLocation && locationPermission && trip?.locations.length > 0 ? (
+        {currentLocation && locationPermission ? (
+          // && trip?.locations.length > 0
           <>
             <View style={{ height: "50%" }}>
               {!noInternet ? (
@@ -763,6 +793,9 @@ function MapScreen({ route, navigation }) {
           </>
         ) : (
           <ActivityIndicator visible={true} />
+          // <>
+          //   <AppText>LOADING</AppText>
+          // </>
         )}
 
         <View style={[styles.success, { display: showSuccess }]}>
