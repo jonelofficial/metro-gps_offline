@@ -24,7 +24,11 @@ function ListItem({ onPress, item, setOffScan }) {
 
   useEffect(() => {
     if (item.locations.length === 0 || !item.points) return null;
-    if (item.odometer_done <= 0 || newLocations.length % 2 !== 0) {
+    if (
+      item.odometer_done < 0 ||
+      newLocations.length % 2 !== 0 ||
+      item.odometer_done == null
+    ) {
       setOffScan(true);
     }
   }, []);
@@ -63,7 +67,9 @@ function ListItem({ onPress, item, setOffScan }) {
             styles.container,
             {
               backgroundColor:
-                (item.odometer_done <= 0 || newLocations.length % 2 !== 0) &&
+                (item.odometer_done < 0 ||
+                  newLocations.length % 2 !== 0 ||
+                  item.odometer_done == null) &&
                 colors.danger,
             },
           ]}
@@ -78,7 +84,9 @@ function ListItem({ onPress, item, setOffScan }) {
               borderWidth: 1,
               borderRadius: 5,
               borderColor:
-                item.odometer_done <= 0 || newLocations.length % 2 !== 0
+                item.odometer_done < 0 ||
+                newLocations.length % 2 !== 0 ||
+                item.odometer_done == null
                   ? colors.light4
                   : colors.success,
             }}
@@ -87,7 +95,9 @@ function ListItem({ onPress, item, setOffScan }) {
               style={{
                 fontSize: 14,
                 color:
-                  item.odometer_done <= 0 || newLocations.length % 2 !== 0
+                  item.odometer_done < 0 ||
+                  newLocations.length % 2 !== 0 ||
+                  item.odometer_done == null
                     ? colors.light4
                     : colors.success,
                 marginHorizontal: 5,
@@ -110,8 +120,9 @@ function ListItem({ onPress, item, setOffScan }) {
                 styles.km,
                 {
                   color:
-                    (item.odometer_done <= 0 ||
-                      newLocations.length % 2 !== 0) &&
+                    (item.odometer_done < 0 ||
+                      newLocations.length % 2 !== 0 ||
+                      item.odometer_done == null) &&
                     colors.light4,
                 },
               ]}
@@ -128,8 +139,9 @@ function ListItem({ onPress, item, setOffScan }) {
                   styles.hr,
                   {
                     color:
-                      (item.odometer_done <= 0 ||
-                        newLocations.length % 2 !== 0) &&
+                      (item.odometer_done < 0 ||
+                        newLocations.length % 2 !== 0 ||
+                        item.odometer_done == null) &&
                       colors.light4,
                   },
                 ]}
@@ -149,8 +161,9 @@ function ListItem({ onPress, item, setOffScan }) {
                 styles.name,
                 {
                   color:
-                    (item.odometer_done <= 0 ||
-                      newLocations.length % 2 !== 0) &&
+                    (item.odometer_done < 0 ||
+                      newLocations.length % 2 !== 0 ||
+                      item.odometer_done == null) &&
                     colors.light4,
                 },
               ]}
@@ -162,8 +175,9 @@ function ListItem({ onPress, item, setOffScan }) {
                 styles.date,
                 {
                   color:
-                    (item.odometer_done <= 0 ||
-                      newLocations.length % 2 !== 0) &&
+                    (item.odometer_done < 0 ||
+                      newLocations.length % 2 !== 0 ||
+                      item.odometer_done == null) &&
                     colors.light4,
                 },
               ]}

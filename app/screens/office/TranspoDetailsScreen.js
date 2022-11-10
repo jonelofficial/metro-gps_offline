@@ -27,6 +27,8 @@ import Screen from "../../components/Screen";
 import Spacer from "../../components/Spacer";
 import routes from "../../navigation/routes";
 import Scanner from "../../components/Scanner";
+import { deleteFromTable } from "../../utility/sqlite";
+import useLocation from "../../hooks/useLocation";
 
 function TranspoDetailsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
@@ -43,11 +45,15 @@ function TranspoDetailsScreen({ navigation, route }) {
   const [isCompanion, setIsCompanion] = useState(false);
   const [isOthers, setIsOthers] = useState(false);
 
-  // TIMER
-
   //
-  const { user, token, setOfflineTrips, offlineTrips, noInternet } =
-    useContext(AuthContext);
+  const {
+    user,
+    token,
+    setOfflineTrips,
+    offlineTrips,
+    noInternet,
+    currentLocation,
+  } = useContext(AuthContext);
 
   useEffect(() => {
     if (route.params?.image) {
@@ -101,6 +107,12 @@ function TranspoDetailsScreen({ navigation, route }) {
       Keyboard.dismiss();
       setLoading(true);
       let tripData;
+      const pointObj = [
+        {
+          latitude: await currentLocation.latitude,
+          longitude: await currentLocation.longitude,
+        },
+      ];
 
       const form = new FormData();
       // form.append("image", {
@@ -111,6 +123,7 @@ function TranspoDetailsScreen({ navigation, route }) {
       form.append("vehicle_id", vehicleInfo.id);
       form.append("odometer", data.odometer);
       form.append("companion", JSON.stringify(companion));
+      form.append("points", JSON.stringify(pointObj));
       form.append("others", data.others);
 
       console.log(form);

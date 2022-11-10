@@ -36,6 +36,19 @@ export const insertToTable = async (query, values) => {
   });
 };
 
+export const updateToTable = async (query, values) => {
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(
+        query,
+        values,
+        (transact, resultset) => resolve(resultset),
+        (transact, err) => reject(err)
+      );
+    });
+  });
+};
+
 export const createTable = async (tableName, fields) => {
   db.transaction((tx) => {
     tx.executeSql(`CREATE TABLE IF NOT EXISTS ${tableName} (${fields})`),

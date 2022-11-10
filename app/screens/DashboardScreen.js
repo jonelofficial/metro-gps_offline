@@ -32,7 +32,7 @@ import { BASEURL } from "@env";
 import * as Notifications from "expo-notifications";
 
 import routes from "../navigation/routes";
-import { selectTable } from "../utility/sqlite";
+import { deleteFromTable, selectTable } from "../utility/sqlite";
 
 function DashboardScreen({ navigation }) {
   const [text, setText] = useState();
@@ -51,6 +51,7 @@ function DashboardScreen({ navigation }) {
     setOfflineGasStations,
     offlineVehicles,
     setOffScan,
+    unfinishTrip,
   } = useContext(AuthContext);
 
   // Scroll
@@ -116,6 +117,12 @@ function DashboardScreen({ navigation }) {
     // Handle if have an unsave trip from map screen
     (async () => {
       try {
+        if (!unfinishTrip) {
+          await deleteFromTable("locations");
+          await deleteFromTable("trip");
+          await deleteFromTable("route");
+        }
+
         setOfflineGasStations([]);
         setOfflineVehicles([]);
         setOfflineVehicles(await selectTable("vehicles"));
