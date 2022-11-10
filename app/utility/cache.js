@@ -31,10 +31,10 @@ const get = async (key) => {
 
     if (!item) return null;
 
-    if (isExpired(item)) {
-      await AsyncStorage.removeItem(prefix + key);
-      return null;
-    }
+    // if (isExpired(item)) {
+    //   await AsyncStorage.removeItem(prefix + key);
+    //   return null;
+    // }
 
     return item.value;
   } catch (error) {

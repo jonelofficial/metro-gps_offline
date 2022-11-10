@@ -28,6 +28,7 @@ function AppContext({ children }) {
   const [locationPermission, setLocationPermission] = useState(false);
   const [offScan, setOffScan] = useState(false);
   const [odometer, setOdometer] = useState();
+  const [unfinishTrip, setUnfinishTrip] = useState(false);
 
   const [offlineVehicles, setOfflineVehicles] = useState();
   const [offlineGasStations, setOfflineGasStations] = useState();
@@ -161,6 +162,8 @@ function AppContext({ children }) {
         setCurrentLocation,
         setOffScan,
         offScan,
+        unfinishTrip,
+        setUnfinishTrip,
       }}
     >
       {children}

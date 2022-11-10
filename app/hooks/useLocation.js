@@ -50,7 +50,7 @@ export default useLocation = () => {
     }
   };
 
-  const handleArrived = async (trip, odometer) => {
+  const handleArrived = async (trip) => {
     try {
       const result = await Location.getCurrentPositionAsync({
         enableHighAccuracy: true,
@@ -62,19 +62,28 @@ export default useLocation = () => {
         longitude: result.coords.longitude,
       });
 
-      const api = await createLocation(
-        {
-          trip_id: trip,
-          lat: result.coords.latitude,
-          long: result.coords.longitude,
-          address: res,
-          status: "arrived",
-          odometer: odometer,
-        },
-        token
-      );
+      // const api = await createLocation(
+      //   {
+      //     trip_id: trip,
+      //     lat: result.coords.latitude,
+      //     long: result.coords.longitude,
+      //     address: res,
+      //     status: "arrived",
+      //   },
+      //   token
+      // );
 
-      return api.data;
+      // return api.data;
+
+      const api = {
+        trip_id: trip,
+        lat: result.coords.latitude,
+        long: result.coords.longitude,
+        address: res,
+        status: "arrived",
+      };
+
+      return api;
     } catch (error) {
       console.log("HANDLE ARRIVED ERROR: ", error);
     }
@@ -92,18 +101,27 @@ export default useLocation = () => {
         longitude: result.coords.longitude,
       });
 
-      const api = await createLocation(
-        {
-          trip_id: trip,
-          lat: result.coords.latitude,
-          long: result.coords.longitude,
-          address: res,
-          status: "left",
-        },
-        token
-      );
+      // const api = await createLocation(
+      //   {
+      //     trip_id: trip,
+      //     lat: result.coords.latitude,
+      //     long: result.coords.longitude,
+      //     address: res,
+      //     status: "left",
+      //   },
+      //   token
+      // );
 
-      return api.data;
+      const api = {
+        trip_id: trip,
+        lat: result.coords.latitude,
+        long: result.coords.longitude,
+        address: res,
+        status: "left",
+      };
+
+      // return api.data;
+      return api;
     } catch (error) {
       console.log("HANDLE LEFT ERROR: ", error);
     }
