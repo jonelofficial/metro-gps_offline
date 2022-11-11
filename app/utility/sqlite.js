@@ -13,6 +13,16 @@ export const selectTable = async (tableName) => {
   });
 };
 
+export const dropTable = async (query) => {
+  db.transaction((tx) => {
+    tx.executeSql(
+      `DROP TABLE ${query}`,
+      (transact, resultset) => console.log(resultset),
+      (transact, err) => console.log(err)
+    );
+  });
+};
+
 export const deleteFromTable = async (query) => {
   db.transaction((tx) => {
     tx.executeSql(

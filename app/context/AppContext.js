@@ -10,7 +10,7 @@ import jwtDecode from "jwt-decode";
 import { Alert, Dimensions, Linking, LogBox, ToastAndroid } from "react-native";
 import AuthContext from "../auth/context";
 import authStorage from "../auth/storage";
-import { createTable, deleteFromTable } from "../utility/sqlite";
+import { createTable, deleteFromTable, dropTable } from "../utility/sqlite";
 import { useNetInfo } from "@react-native-community/netinfo";
 
 LogBox.ignoreLogs(["exported from 'deprecated-react-native-prop-types'."]);
@@ -57,6 +57,27 @@ function AppContext({ children }) {
       //   "id interger primary key not null, user_id TEXT, vehicle_id TEXT, locations BLOB, diesels BLOB, odometer INTEGER , odometer_image_path TEXT, companion TEXT , points BLOB, trip_date TEXT"
       // );
       // await deleteFromTable("trips");
+
+      // await dropTable("route");
+
+      await createTable(
+        "trip",
+        "id integer primary key not null, _id TEXT, user_id TEXT, vehicle_id TEXT, locations LONGTEXT, diesels LONGTEXT, odometer INTEGER, odometer_done INTEGER, odometer_image_path TEXT, others LONGTEXT, companion LONGTEXT"
+      );
+      await createTable(
+        "locations",
+        "id integer primary key not null, trip_id TEXT, lat NUMBER, long NUMBER, status TEXT, address LONGTEXT"
+      );
+
+      await createTable(
+        "route",
+        "id integer primary key not null, points CLOB"
+      );
+
+      await createTable(
+        "gas",
+        "id integer primary key not null, gas_station_id TEXT, trip_id TEXT, gas_station_name TEXT, odometer NUMBER, liter NUMBER, lat NUMBER, long NUMBER , amount NUMBER"
+      );
     })();
   }, []);
 

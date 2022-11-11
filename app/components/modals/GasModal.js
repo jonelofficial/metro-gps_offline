@@ -76,7 +76,7 @@ export default function GasModal({
               </>
             )}
 
-            <AppText style={{ marginBottom: 5 }}>Odemeter:</AppText>
+            <AppText style={{ marginBottom: 5 }}>Odometer:</AppText>
             <AppFormField
               name="odometer"
               placeholder="Input odometer..."
