@@ -27,7 +27,7 @@ import Screen from "../../components/Screen";
 import Spacer from "../../components/Spacer";
 import routes from "../../navigation/routes";
 import Scanner from "../../components/Scanner";
-import { deleteFromTable } from "../../utility/sqlite";
+import { deleteFromTable, insertToTable } from "../../utility/sqlite";
 import useLocation from "../../hooks/useLocation";
 
 function TranspoDetailsScreen({ navigation, route }) {

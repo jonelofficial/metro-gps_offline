@@ -10,6 +10,7 @@ import AuthContext from "../auth/context";
 import colors from "../config/colors";
 import Screen from "../components/Screen";
 import routes from "../navigation/routes";
+import { getPathLength } from "geolib";
 
 function MapDetailsScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
@@ -29,11 +30,11 @@ function MapDetailsScreen({ route, navigation }) {
   useEffect(() => {
     fetchGasStation();
     setPoints(item.points);
+    // console.log(item);
   }, []);
-  // console.log(item);
 
   const handleResumeTrip = async () => {
-    await navigation.navigate(routes.MAP, {
+    navigation.navigate(routes.MAP, {
       trip: item,
     });
   };
