@@ -32,7 +32,7 @@ import { BASEURL } from "@env";
 import * as Notifications from "expo-notifications";
 
 import routes from "../navigation/routes";
-import { deleteFromTable, dropTable, selectTable } from "../utility/sqlite";
+import { deleteFromTable, selectTable } from "../utility/sqlite";
 
 function DashboardScreen({ navigation }) {
   const [text, setText] = useState();
@@ -115,9 +115,6 @@ function DashboardScreen({ navigation }) {
         setLoading(true);
         const tripCache = await cache.get(user.userId);
         if (tripCache === null) {
-          const routeRes = await selectTable("route");
-          console.log(routeRes);
-
           await deleteFromTable("locations");
           await deleteFromTable("trip");
           await deleteFromTable("route");
@@ -128,15 +125,15 @@ function DashboardScreen({ navigation }) {
           if (!noInternet) {
             const trip = await selectTable("trip");
 
+            let mapPoints = [];
             const routeRes = await selectTable("route");
-            const newPoints = await JSON.parse(routeRes[0].points);
-            // const newPoints = await JSON.parse(
-            //   routeRes[routeRes.length - 1].points
-            // );
-            console.log(routeRes);
+
+            await routeRes.map((item) => {
+              mapPoints.push(JSON.parse(item.points));
+            });
 
             const newObjt = {
-              points: newPoints,
+              points: mapPoints,
             };
 
             await updateTrip(trip[0]._id, newObjt, token);
@@ -154,24 +151,10 @@ function DashboardScreen({ navigation }) {
           }
         }
 
-        setOfflineGasStations([]);
-        setOfflineVehicles([]);
-        setOfflineVehicles(await selectTable("vehicles"));
-        setOfflineGasStations(await selectTable("gas_station"));
-
-        // setLoading(true);
-
-        // if (!noInternet) {
-        //   const pointsObj = { points: tripCache.points };
-        //   await updateTrip(tripCache.id, tripCache.dataObj, token);
-        //   await updateTrip(tripCache.id, pointsObj, token);
-        //   await AsyncStorage.removeItem("cache" + user.userId);
-        //   handleRefresh();
-        // } else {
-        //   alert(
-        //     "Please make sure you have an internet connection to sync your trip"
-        //   );
-        // }
+        // setOfflineGasStations([]);
+        // setOfflineVehicles([]);
+        // setOfflineVehicles(await selectTable("vehicles"));
+        // setOfflineGasStations(await selectTable("gas_station"));
       } catch (error) {
         alert("ERROR ON CACHE: ", error);
         console.log(error);
