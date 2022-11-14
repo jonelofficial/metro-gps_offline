@@ -2,6 +2,17 @@ import * as SQLite from "expo-sqlite";
 
 const db = SQLite.openDatabase("db.db");
 
+db.exec(
+  [
+    {
+      sql: 'PRAGMA cache_size=8192; PRAGMA encoding="UTF-8"; PRAGMA synchronous=NORMAL; PRAGMA temp_store=FILE;',
+      args: [],
+    },
+  ],
+  false,
+  () => console.log("Foreign keys turned on")
+);
+
 export const selectTable = async (tableName) => {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
