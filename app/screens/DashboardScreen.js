@@ -136,7 +136,8 @@ function DashboardScreen({ navigation }) {
               points: mapPoints,
             };
 
-            await updateTrip(trip[0]._id, newObjt, token);
+            const res = await updateTrip(trip[0]._id, newObjt, token);
+            console.log("DASHBOARD UNFINISH TRIP: ", res);
 
             await deleteFromTable("locations");
             await deleteFromTable("trip");
