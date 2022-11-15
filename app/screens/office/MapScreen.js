@@ -173,11 +173,13 @@ function MapScreen({ route, navigation }) {
           ]
         );
 
-        await insertToTable("INSERT INTO route (points) values (?)", [
-          JSON.stringify(routeTrip.points[0]),
-        ]);
+        routeTrip.points.map(async (item, index) => {
+          await insertToTable("INSERT INTO route (points) values (?)", [
+            JSON.stringify(item),
+          ]);
+        });
 
-        // await reloadRoute();
+        await reloadRoute();
       }
 
       if (routeTrip.locations.length <= 0) {
@@ -220,18 +222,47 @@ function MapScreen({ route, navigation }) {
       BackHandler.removeEventListener("hardwareBackPress", backAction);
   }, [trip, netInfo]);
 
-  // useEffect(() => {
-  //   (async () => {
-  //     const tripRes = await selectTable("trip");
-  //     if (tripRes.length > 0) {
-  //       const meter = getPathLength(points);
-  //       const km = meter / 1000;
-  //       setTotalKm(km.toFixed(1));
+  useEffect(() => {
+    (async () => {
+      const tripRes = await selectTable("trip");
+      if (tripRes.length > 0) {
+        const meter = getPathLength(points);
+        const km = meter / 1000;
 
-  //       setEstimatedOdo(parseFloat(km.toFixed(1)) + tripRes[0].odometer);
-  //     }
-  //   })();
-  // }, [trip]);
+        setEstimatedOdo(parseFloat(km.toFixed(1)) + tripRes[0].odometer);
+      }
+    })();
+  }, [trip]);
+
+  useEffect(() => {
+    (async () => {
+      if (currentLocation && currentLocation.speed >= 1.4 && !mapLoading) {
+        setPoints((currentValue) => [
+          ...currentValue,
+          {
+            latitude: currentLocation.latitude,
+            longitude: currentLocation.longitude,
+          },
+        ]);
+
+        await insertToTable("INSERT INTO route (points) values (?)", [
+          JSON.stringify({
+            latitude: currentLocation.latitude,
+            longitude: currentLocation.longitude,
+          }),
+        ]);
+      }
+      if (points.length == 0 || trip == undefined) {
+        await reloadRoute();
+        await reloadMapState();
+        await reloadGas();
+      }
+
+      const meter = getPathLength(points);
+      const km = meter / 1000;
+      setTotalKm(km.toFixed(1));
+    })();
+  }, [currentLocation]);
 
   // ACTIVITY INDICATOR FOR SHOWING SUCCESS ANIMATION
   const handleSuccess = () => {
@@ -313,50 +344,6 @@ function MapScreen({ route, navigation }) {
 
   // SQLITE HERE ////////////////////////////////////////
 
-  useEffect(() => {
-    (async () => {
-      if (currentLocation && currentLocation.speed >= 1.4 && !mapLoading) {
-        // setPoints((currentValue) => [
-        //   ...currentValue,
-        //   {
-        //     latitude: currentLocation.latitude,
-        //     longitude: currentLocation.longitude,
-        //   },
-        // ]);
-
-        await insertToTable("INSERT INTO route (points) values (?)", [
-          JSON.stringify({
-            latitude: currentLocation.latitude,
-            longitude: currentLocation.longitude,
-          }),
-        ]);
-      }
-      if (
-        // points.length == 0 ||
-        trip == undefined
-      ) {
-        // await reloadRoute();
-        await reloadMapState();
-        await reloadGas();
-      }
-    })();
-  }, [trip, currentLocation]);
-
-  // useEffect(async () => {
-  //   let mapPoints = [];
-  //   const routeRes = await selectTable("route");
-
-  //   await routeRes.map((item) => {
-  //     mapPoints.push(JSON.parse(item.points));
-  //   });
-
-  //   const meter = getPathLength(mapPoints);
-  //   const km = meter / 1000;
-  //   setTotalKm(km.toFixed(1));
-
-  //   setEstimatedOdo(parseFloat(km.toFixed(1)) + tripRes[0].odometer);
-  // }, [currentLocation]);
-
   const sqliteLeft = async () => {
     try {
       setLeftLoading(true);
@@ -382,7 +369,7 @@ function MapScreen({ route, navigation }) {
       setTimeout(() => {
         setLeftLoading(false);
       }, 1000);
-      // handleSuccess();
+      handleSuccess();
     } catch (error) {
       setLeftLoading(false);
       alert("ERROR SQLITE LEFT");
@@ -415,7 +402,7 @@ function MapScreen({ route, navigation }) {
       setTimeout(() => {
         setArrivedLoading(false);
       }, 1000);
-      // handleSuccess();
+      handleSuccess();
     } catch (error) {
       setArrivedLoading(false);
       alert("ERROR SQLITE ARRIVED");
@@ -462,7 +449,7 @@ function MapScreen({ route, navigation }) {
       setTimeout(() => {
         setGasLoading(false);
       }, 2000);
-      handleSuccess();
+      // handleSuccess();
     } catch (error) {
       setGasLoading(false);
       alert("ERROR GAS PROCESS");
@@ -490,11 +477,12 @@ function MapScreen({ route, navigation }) {
   const reloadRoute = async () => {
     const routeRes = await selectTable("route");
     if (routeRes.length > 0) {
-      // setPoints([
-      //   ...routeRes.map((item) => {
-      //     return JSON.parse(item.points);
-      //   }),
-      // ]);
+      setPoints((prevState) => [
+        ...prevState,
+        ...routeRes.map((item) => {
+          return JSON.parse(item.points);
+        }),
+      ]);
     }
   };
 
@@ -528,7 +516,7 @@ function MapScreen({ route, navigation }) {
       };
 
       const res = await updateTrip(trip_id, newObjt, token);
-      console.log(res);
+      console.log("MAP SCREEN DONE: ", res);
 
       doneReset();
       setDoneLoading(false);
@@ -570,11 +558,11 @@ function MapScreen({ route, navigation }) {
                   ref={mapView}
                   onPanDrag={() => setDrag(true)}
                 >
-                  {/* <Polyline
+                  <Polyline
                     coordinates={points}
                     strokeColor={colors.line}
                     strokeWidth={3}
-                  /> */}
+                  />
                   {trip?.locations.map((item, i) => {
                     const markerTitle = i + 1;
                     return (
@@ -755,8 +743,8 @@ function MapScreen({ route, navigation }) {
             </View>
           </>
         ) : (
-          // <ActivityIndicator visible={true} />
-          <AppText>Loading</AppText>
+          <ActivityIndicator visible={true} />
+          // <AppText>Loading</AppText>
         )}
 
         <View style={[styles.success, { display: showSuccess }]}>

@@ -5,12 +5,14 @@ const db = SQLite.openDatabase("db.db");
 db.exec(
   [
     {
-      sql: 'PRAGMA cache_size=8192; PRAGMA encoding="UTF-8"; PRAGMA synchronous=NORMAL; PRAGMA temp_store=FILE;',
+      sql: 'PRAGMA cache_size=100000000; PRAGMA locking_mode = EXCLUSIVE; PRAGMA encoding="UTF-8"; PRAGMA synchronous=NORMAL; PRAGMA temp_store=FILE;',
       args: [],
     },
   ],
   false,
-  () => console.log("Foreign keys turned on")
+  (transact, resultset) =>
+    console.log("W O R K I N G  S Q L I T E: ", resultset),
+  (transact, err) => console.log("S Q L I T E  E R R O R: ", err)
 );
 
 export const selectTable = async (tableName) => {
@@ -82,7 +84,7 @@ export const showTable = async () => {
   return new Promise((resolve, reject) => {
     db.transaction((tx) => {
       tx.executeSql(
-        "SELECT name FROM sqlite_schema WHERE type ='table'",
+        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
         (transact, resultset) => resolve(resultset),
         (transact, err) => reject(err)
       );
