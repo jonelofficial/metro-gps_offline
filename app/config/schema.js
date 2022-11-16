@@ -9,9 +9,8 @@ export const loginSchema = Yup.object().shape({
 //  TRANSPO DETAILS SCREEN
 export const transpoDetailsSchema = Yup.object().shape({
   odometer: Yup.string().required().label("Odometer"),
-  // odometer_image_path: Yup.string().required().label("Odometer Picture"),
-  odometer_image_path: Yup.object().required().label("Odometer Picture"),
-  // odometer_image_path: Yup.string().label("Odometer Picture"),
+  // odometer_image_path: Yup.object().required().label("Odometer Picture"),
+  odometer_image_path: Yup.string().label("Odometer Picture"),
   // companion: Yup.string().label("Companion"),
   others: Yup.string().label("Others"),
 });

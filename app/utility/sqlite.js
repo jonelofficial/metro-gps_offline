@@ -5,7 +5,7 @@ const db = SQLite.openDatabase("db.db");
 db.exec(
   [
     {
-      sql: 'PRAGMA cache_size=100000000; PRAGMA locking_mode = EXCLUSIVE; PRAGMA encoding="UTF-8"; PRAGMA synchronous=NORMAL; PRAGMA temp_store=FILE;',
+      sql: 'PRAGMA auto_vacuum = 1|2; PRAGMA secure_delete = ON; PRAGMA page_size = 100000000; PRAGMA cache_size=1000000000000; PRAGMA locking_mode = EXCLUSIVE; PRAGMA encoding="UTF-8"; PRAGMA synchronous=NORMAL; PRAGMA temp_store=FILE;',
       args: [],
     },
   ],
