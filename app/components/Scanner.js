@@ -89,6 +89,8 @@ const Scanner = ({
             {
               width: width * 1.8,
               height: height * 1.1,
+              position: "absolute",
+              left: "-30%",
             },
           ]}
         />

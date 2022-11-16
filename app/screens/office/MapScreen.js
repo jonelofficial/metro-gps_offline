@@ -122,11 +122,21 @@ function MapScreen({ route, navigation }) {
         onPress: noInternet
           ? () => BackHandler.exitApp()
           : async () => {
-              if (!noInternet && trip?.locations.length % 2 !== 0) {
-                // setArrivedModal(true);
-                return handleArrivedButton();
+              if (
+                !noInternet &&
+                trip?.locations.length % 2 !== 0 &&
+                !mapLoading
+              ) {
+                return sqliteArrived();
+              } else if (
+                !noInternet &&
+                trip?.locations.length % 2 === 0 &&
+                !mapLoading
+              ) {
+                setDoneModal(true);
+              } else {
+                alert("Please finish the map loading");
               }
-              setDoneModal(true);
             },
       },
     ]);
@@ -327,18 +337,18 @@ function MapScreen({ route, navigation }) {
       longitude: newRegion.longitude,
     });
 
-    !drag && animateMap();
+    !drag && animateMap(newRegion);
   };
 
-  const animateMap = () => {
+  const animateMap = (newRegion) => {
     mapView.current.animateToRegion(
       {
-        latitude: currentLocation.latitude,
-        longitude: currentLocation.longitude,
+        latitude: newRegion.latitude,
+        longitude: newRegion.longitude,
         latitudeDelta: currentLocation.latitudeDelta,
         longitudeDelta: currentLocation.longitudeDelta,
       },
-      1000
+      500
     );
   };
 
