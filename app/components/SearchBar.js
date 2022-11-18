@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker from "@react-native-community/datetimepicker";
@@ -8,6 +8,7 @@ import { findTrip } from "../api/office/TripApi";
 import defaultStyle from "../config/styles";
 import Fonts from "./Fonts";
 import fonts from "../config/fonts";
+import AuthContext from "../auth/context";
 
 function SearchBar({
   text,
@@ -25,8 +26,9 @@ function SearchBar({
   const [datePicker, setDatePicker] = useState(false);
   const [date, setDate] = useState(new Date());
 
+  const { noInternet } = useContext(AuthContext);
+
   const onDateSelected = async (event, value) => {
-    console.log(event);
     setLoading(true);
     setDatePicker(false);
     setNoData(false);
@@ -50,7 +52,11 @@ function SearchBar({
     setLoading(false);
   };
   const showDatePicker = () => {
-    setDatePicker(true);
+    if (!noInternet) {
+      setDatePicker(true);
+    } else {
+      alert("No internet connection...");
+    }
   };
   const handleClear = () => {
     setText(null);

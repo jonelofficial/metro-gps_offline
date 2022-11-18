@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
+  Button,
   FlatList,
   StyleSheet,
   ToastAndroid,
@@ -9,14 +10,12 @@ import {
   View,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 import { findTrip, getTrip, updateTrip } from "../api/office/TripApi";
 import AppText from "../components/AppText";
 import AuthContext from "../auth/context";
 import AppHeading from "../components/AppHeading";
 import authStorage from "../auth/storage";
-import cache from "../utility/cache";
 import Camera from "../components/Camera";
 import Card from "../components/Card";
 import colors from "../config/colors";
@@ -46,8 +45,13 @@ function DashboardScreen({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const [page, setPage] = useState(1);
   const [tripDate, setTripDate] = useState();
-  const { setOfflineVehicles, setOfflineGasStations, setOffScan } =
-    useContext(AuthContext);
+  const {
+    setOfflineVehicles,
+    setOfflineGasStations,
+    setOffScan,
+    offline,
+    setOffline,
+  } = useContext(AuthContext);
 
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
@@ -57,17 +61,21 @@ function DashboardScreen({ navigation }) {
 
   const fetchTrip = async () => {
     try {
-      const res = await getTrip(token, page + 1);
-      if (res.data.length === 0) {
+      if (!noInternet) {
+        const res = await getTrip(token, page + 1);
+        if (res.data.length === 0) {
+          setEndLoading(false);
+          return setNoData(true);
+        }
+        await res.data.map((item) =>
+          setTrips((currentValue) => [...currentValue, item])
+        );
+        setData((currentValue) => currentValue + res.data.length);
         setEndLoading(false);
-        return setNoData(true);
+        return setLoading(false);
+      } else {
+        alert("No internet connection...");
       }
-      await res.data.map((item) =>
-        setTrips((currentValue) => [...currentValue, item])
-      );
-      setData((currentValue) => currentValue + res.data.length);
-      setEndLoading(false);
-      return setLoading(false);
     } catch (error) {
       alert("No server response: ", error);
       setLoading(false);
@@ -77,17 +85,21 @@ function DashboardScreen({ navigation }) {
 
   const searchFetchTrip = async () => {
     try {
-      const res = await findTrip(token, tripDate, page + 1);
-      if (res.data.length === 0) {
+      if (!noInternet) {
+        const res = await findTrip(token, tripDate, page + 1);
+        if (res.data.length === 0) {
+          setEndLoading(false);
+          return setNoData(true);
+        }
+        await res.data.map((item) =>
+          setTrips((currentValue) => [...currentValue, item])
+        );
+        setData((currentValue) => currentValue + res.data.length);
         setEndLoading(false);
-        return setNoData(true);
+        return setLoading(false);
+      } else {
+        alert("No internet connection...");
       }
-      await res.data.map((item) =>
-        setTrips((currentValue) => [...currentValue, item])
-      );
-      setData((currentValue) => currentValue + res.data.length);
-      setEndLoading(false);
-      return setLoading(false);
     } catch (error) {
       alert("No server response: ", error);
       setLoading(false);
@@ -96,61 +108,30 @@ function DashboardScreen({ navigation }) {
   };
 
   useEffect(() => {
-    ToastAndroid.show(`Syncing`, ToastAndroid.SHORT);
-
-    Notifications.setNotificationHandler({
-      handleNotification: async () => {
-        return {
-          shouldShowAlert: true,
-          shouldPlaySound: true,
-          shouldSetBadge: true,
-        };
-      },
-    });
-
-    setImage(user.profile ? `${BASEURL}/${user.profile}` : null);
     // Handle if have an unsave trip from map screen
     (async () => {
       try {
-        setLoading(true);
-        const tripCache = await cache.get(user.userId);
-        if (tripCache === null) {
-          await deleteFromTable("locations");
-          await deleteFromTable("offline_trip");
-          await deleteFromTable("route");
-          await deleteFromTable("gas");
+        ToastAndroid.show(`Syncing`, ToastAndroid.SHORT);
 
-          await handleRefresh();
-        } else {
-          if (!noInternet) {
-            // const trip = await selectTable("trip");
+        Notifications.setNotificationHandler({
+          handleNotification: async () => {
+            return {
+              shouldShowAlert: true,
+              shouldPlaySound: true,
+              shouldSetBadge: true,
+            };
+          },
+        });
 
-            // let mapPoints = [];
-            // const routeRes = await selectTable("route");
+        // await deleteFromTable("offline_trip");
+        // await deleteFromTable("trip");
+        // await deleteFromTable("locations");
+        // await deleteFromTable("gas");
+        await deleteFromTable("route");
 
-            // await routeRes.map((item) => {
-            //   mapPoints.push(JSON.parse(item.points));
-            // });
+        setImage(user.profile ? `${BASEURL}/${user.profile}` : null);
 
-            // const newObjt = {
-            //   points: mapPoints,
-            // };
-
-            // const res = await updateTrip(trip[0]._id, newObjt, token);
-            // console.log("DASHBOARD UNFINISH TRIP: ", res);
-
-            await deleteFromTable("locations");
-            await deleteFromTable("offline_trip");
-            await deleteFromTable("route");
-            await deleteFromTable("gas");
-            await AsyncStorage.removeItem("cache" + user.userId);
-            await handleRefresh();
-          } else {
-            alert(
-              "Please make sure you have an internet connection to sync your trip"
-            );
-          }
-        }
+        await handleRefresh();
 
         setOfflineGasStations([]);
         setOfflineVehicles([]);
@@ -177,16 +158,12 @@ function DashboardScreen({ navigation }) {
         content,
         trigger: null,
       });
-
-      // Notifications.scheduleNotificationAsync({
-      //   content,
-      //   trigger: { seconds: 2 },
-      // });
     }
   }, [offScan]);
 
   const handleLogout = () => {
     setOffScan(false);
+    setOffline(false);
     setUser(null);
     setToken(null);
     authStorage.removeToken();
@@ -199,6 +176,7 @@ function DashboardScreen({ navigation }) {
   const handleRefresh = async () => {
     try {
       setOffScan(false);
+      setOffline(false);
       setPage(1);
       setLoading(true);
       setTrips([]);
@@ -206,9 +184,43 @@ function DashboardScreen({ navigation }) {
       setNoData(false);
       setText(null);
 
-      const res = await getTrip(token, 1);
-      setTrips(res.data);
-      setData(res.data.length);
+      let totalItems = 0;
+      const res = await selectTable("offline_trip");
+
+      if (res.length >= 0) {
+        await res.reverse().map((item, index) => {
+          setTrips((prevState) => [
+            ...prevState,
+            {
+              _id: res.length - index,
+              companion: JSON.parse(item.companion),
+              diesels: JSON.parse(item.gas),
+              locations: JSON.parse(item.locations),
+              odometer: JSON.parse(item.odometer),
+              odometer_done: JSON.parse(item.odometer_done),
+              points: JSON.parse(item.points),
+              user_id: {
+                _id: user.userId,
+                trip_template: user.trip_template,
+              },
+              offline: true,
+              trip_date: JSON.parse(item.date),
+            },
+          ]);
+        });
+        totalItems = totalItems + res.length;
+      }
+      if (!noInternet) {
+        const res = await getTrip(token, 1);
+        res.data.map((item) => {
+          setTrips((prevState) => [...prevState, item]);
+        });
+        totalItems = totalItems + res.data.length;
+      } else {
+        alert("No internet connection...");
+      }
+
+      setData(totalItems);
       slideIn();
       return setLoading(false);
     } catch (error) {
@@ -274,6 +286,7 @@ function DashboardScreen({ navigation }) {
     return (
       <ListItem
         setOffScan={setOffScan}
+        setOffline={setOffline}
         item={item}
         onPress={() => navigation.navigate(routes.MAPVIEW, { item })}
       />
@@ -300,7 +313,7 @@ function DashboardScreen({ navigation }) {
       setPage((value) => value + 1);
       await searchFetchTrip();
     } else {
-      return;
+      return setEndLoading(false);
     }
   };
 
@@ -334,7 +347,10 @@ function DashboardScreen({ navigation }) {
         <Fonts>
           <AppHeading
             size="h3"
-            style={[styles.count, { display: loading ? "none" : "flex" }]}
+            style={[
+              styles.count,
+              { display: loading ? "none" : "flex", position: "relative" },
+            ]}
           >
             {data > 1
               ? `${data} items`
@@ -344,6 +360,21 @@ function DashboardScreen({ navigation }) {
               ? ``
               : `${data} item`}
           </AppHeading>
+          <View
+            style={{
+              alignItems: "center",
+              position: "absolute",
+              paddingLeft: 10,
+              top: -5,
+              display: offline ? "flex" : "none",
+            }}
+          >
+            <Button
+              title="sync"
+              color={colors.success}
+              onPress={() => console.log("click sync")}
+            />
+          </View>
         </Fonts>
         <Spacer />
 
@@ -360,7 +391,7 @@ function DashboardScreen({ navigation }) {
               ListFooterComponent={
                 endLoading && !noData ? (
                   <Footer />
-                ) : noData ? (
+                ) : !endLoading && noData ? (
                   <FooterNoData />
                 ) : null
               }

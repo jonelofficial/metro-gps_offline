@@ -9,7 +9,7 @@ import fonts from "../../config/fonts";
 import AppText from "../AppText";
 import Fonts from "../Fonts";
 
-function ListItem({ onPress, item, setOffScan }) {
+function ListItem({ onPress, item, setOffScan, setOffline }) {
   let newMinutes = 0;
   let newHours = 0;
   let newLocations = [];
@@ -31,6 +31,8 @@ function ListItem({ onPress, item, setOffScan }) {
     ) {
       setOffScan(true);
     }
+    item?.offline === true && setOffline(true);
+    // console.log("T E S T  :", item);
   }, []);
 
   newLocations.length % 2 === 0 &&
@@ -67,10 +69,11 @@ function ListItem({ onPress, item, setOffScan }) {
             styles.container,
             {
               backgroundColor:
-                (item.odometer_done < 0 ||
-                  newLocations.length % 2 !== 0 ||
-                  item.odometer_done == null) &&
-                colors.danger,
+                item.odometer_done < 0 ||
+                newLocations.length % 2 !== 0 ||
+                item.odometer_done == null
+                  ? colors.danger
+                  : item?.offline === true && colors.disablePrimary,
             },
           ]}
         >
@@ -86,7 +89,8 @@ function ListItem({ onPress, item, setOffScan }) {
               borderColor:
                 item.odometer_done < 0 ||
                 newLocations.length % 2 !== 0 ||
-                item.odometer_done == null
+                item.odometer_done == null ||
+                item?.offline === true
                   ? colors.light4
                   : colors.success,
             }}
@@ -97,20 +101,14 @@ function ListItem({ onPress, item, setOffScan }) {
                 color:
                   item.odometer_done < 0 ||
                   newLocations.length % 2 !== 0 ||
-                  item.odometer_done == null
+                  item.odometer_done == null ||
+                  item?.offline === true
                     ? colors.light4
                     : colors.success,
                 marginHorizontal: 5,
               }}
             >{`#${
-              item.user_id.trip_template === "office"
-                ? item._id.slice(20)
-                : item.user_id.trip_template === "delivery"
-                ? item.attributes.delivery?.attributes.booking_number
-                : item.user_id.trip_template === "feeds_delivery"
-                ? item.attributes.feeds_delivery?.attributes.bags
-                : item.user_id.trip_template === "hauling" &&
-                  item.attributes.hauling?.attributes.trip_number
+              item._id.length > 20 ? item._id.slice(20) : item._id
             }`}</AppText>
           </View>
           {/*  */}
@@ -122,7 +120,8 @@ function ListItem({ onPress, item, setOffScan }) {
                   color:
                     (item.odometer_done < 0 ||
                       newLocations.length % 2 !== 0 ||
-                      item.odometer_done == null) &&
+                      item.odometer_done == null ||
+                      item?.offline === true) &&
                     colors.light4,
                 },
               ]}
@@ -141,7 +140,8 @@ function ListItem({ onPress, item, setOffScan }) {
                     color:
                       (item.odometer_done < 0 ||
                         newLocations.length % 2 !== 0 ||
-                        item.odometer_done == null) &&
+                        item.odometer_done == null ||
+                        item?.offline === true) &&
                       colors.light4,
                   },
                 ]}
@@ -163,7 +163,8 @@ function ListItem({ onPress, item, setOffScan }) {
                   color:
                     (item.odometer_done < 0 ||
                       newLocations.length % 2 !== 0 ||
-                      item.odometer_done == null) &&
+                      item.odometer_done == null ||
+                      item?.offline === true) &&
                     colors.light4,
                 },
               ]}
@@ -177,7 +178,8 @@ function ListItem({ onPress, item, setOffScan }) {
                   color:
                     (item.odometer_done < 0 ||
                       newLocations.length % 2 !== 0 ||
-                      item.odometer_done == null) &&
+                      item.odometer_done == null ||
+                      item?.offline === true) &&
                     colors.light4,
                 },
               ]}

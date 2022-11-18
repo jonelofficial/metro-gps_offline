@@ -34,6 +34,7 @@ function AppContext({ children }) {
   const [offScan, setOffScan] = useState(false);
   const [odometer, setOdometer] = useState();
   const [unfinishTrip, setUnfinishTrip] = useState(false);
+  const [offline, setOffline] = useState(false);
 
   const [offlineVehicles, setOfflineVehicles] = useState();
   const [offlineGasStations, setOfflineGasStations] = useState();
@@ -58,6 +59,7 @@ function AppContext({ children }) {
   useEffect(() => {
     (async () => {
       // await dropTable("offline_trip");
+      // await dropTable("locations");
 
       // const res = await showTable();
       // console.log("T A B L E: ", res);
@@ -69,12 +71,12 @@ function AppContext({ children }) {
 
       await createTable(
         "offline_trip",
-        "id integer primary key not null, vehicle_id TEXT , odometer TEXT, odometer_done TEXT, image LONGTEXT, companion LONGTEXT, points LONGTEXT, others TEXT, locations LONGTEXT , gas LONGTEXT"
+        "id integer primary key not null, date TEXT, vehicle_id TEXT , odometer TEXT, odometer_done TEXT, image LONGTEXT, companion LONGTEXT, points LONGTEXT, others TEXT, locations LONGTEXT , gas LONGTEXT"
       );
 
       await createTable(
         "locations",
-        "id integer primary key not null, trip_id TEXT, lat NUMBER, long NUMBER, status TEXT, address LONGTEXT"
+        "id integer primary key not null, date TEXT, trip_id TEXT, lat NUMBER, long NUMBER, status TEXT, address LONGTEXT"
       );
 
       await createTable(
@@ -193,6 +195,8 @@ function AppContext({ children }) {
         offScan,
         unfinishTrip,
         setUnfinishTrip,
+        offline,
+        setOffline,
       }}
     >
       {children}

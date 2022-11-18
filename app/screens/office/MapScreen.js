@@ -18,9 +18,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from "expo-notifications";
 
 import { mapDoneSchema, mapGasSchema } from "../../config/schema";
-import { updateTrip } from "../../api/office/TripApi";
-import { getGasStation } from "../../api/GasStationApi";
-import { gasCar } from "../../api/office/DieselApi";
+
 import AppButton from "../../components/AppButton";
 import AuthContext from "../../auth/context";
 import ActivityIndicator from "../../components/indicator/ActivityIndicator";
@@ -41,14 +39,12 @@ import {
   selectTable,
   updateToTable,
 } from "../../utility/sqlite";
-import { createLocation } from "../../api/office/LocationsApi";
 import { getPathLength } from "geolib";
 
-function MapScreen({ route, navigation }) {
+function MapScreen({ navigation }) {
   const [trip, setTrip] = useState({ locations: [] });
   const [isModalVisible, setModalVisible] = useState(false);
   const [gasLoading, setGasLoading] = useState(false);
-  const [locationId, setLocationId] = useState([]);
   const [showSuccess, setShowSuccess] = useState("none");
   const [totalKm, setTotalKm] = useState();
 
@@ -70,7 +66,6 @@ function MapScreen({ route, navigation }) {
   //Context
   const {
     user,
-    token,
     noInternet,
     netInfo,
     currentLocation,
@@ -78,6 +73,7 @@ function MapScreen({ route, navigation }) {
     locationPermission,
     setOffScan,
     setUnfinishTrip,
+    offlineGasStations,
   } = useContext(AuthContext);
 
   // GPS
@@ -126,17 +122,9 @@ function MapScreen({ route, navigation }) {
         onPress: noInternet
           ? () => BackHandler.exitApp()
           : async () => {
-              if (
-                !noInternet &&
-                trip?.locations.length % 2 !== 0 &&
-                !mapLoading
-              ) {
+              if (trip?.locations.length % 2 !== 0 && !mapLoading) {
                 return sqliteArrived();
-              } else if (
-                !noInternet &&
-                trip?.locations.length % 2 === 0 &&
-                !mapLoading
-              ) {
+              } else if (trip?.locations.length % 2 === 0 && !mapLoading) {
                 setDoneModal(true);
               } else {
                 alert("Please finish the map loading");
@@ -161,16 +149,14 @@ function MapScreen({ route, navigation }) {
 
       setMapLoading(true);
       setOffScan(false);
-      // await fetchGasStation();
+      await fetchGasStation();
 
       // SQLITE
 
-      // const routeTrip = await route.params.trip;
-
       const tripRes = await selectTable("offline_trip");
+      console.log(tripRes[tripRes.length - 1].points);
 
       if (tripRes.length >= 0) {
-        // console.log(tripRes);
         const pointObj = JSON.parse(tripRes[tripRes.length - 1].points);
         pointObj.map(async (item) => {
           await insertToTable("INSERT INTO route (points) values (?)", [
@@ -185,18 +171,6 @@ function MapScreen({ route, navigation }) {
       if (locPoint.length <= 0) {
         await sqliteLeft();
       } else {
-        await locPoint.map(async (item) => {
-          await insertToTable(
-            "INSERT INTO locations ( trip_id , lat , long , status , address ) values (?,?,?,?,?)",
-            [
-              item.trip_id,
-              item.lat,
-              item.long,
-              item.status,
-              JSON.stringify(item.address),
-            ]
-          );
-        });
         await reloadMapState();
       }
       setMapLoading(false);
@@ -245,7 +219,7 @@ function MapScreen({ route, navigation }) {
           },
         ]);
 
-        await insertToTable("INSERT INTO route (points) values (?)", [
+        insertToTable("INSERT INTO route (points) values (?)", [
           JSON.stringify({
             latitude: currentLocation.latitude,
             longitude: currentLocation.longitude,
@@ -276,9 +250,6 @@ function MapScreen({ route, navigation }) {
   const _handleAppStateChange = async (nextAppState) => {
     let notif;
     if (nextAppState === "background") {
-      const unFinishTrip = true;
-      cache.store(user.userId, unFinishTrip);
-
       const content = {
         title: `Fresh Morning ${
           user.first_name[0].toUpperCase() +
@@ -301,14 +272,11 @@ function MapScreen({ route, navigation }) {
     try {
       setItems([]);
 
-      // if (!noInternet) {
-      //   const gasRes = await getGasStation(token);
-      //   setItems(
-      //     gasRes.data.map((item) => {
-      //       return { label: item.label, value: item._id };
-      //     })
-      //   );
-      // }
+      setItems(
+        offlineGasStations.map((item) => {
+          return { label: item.label, value: item._id };
+        })
+      );
     } catch (error) {
       alert(`ERROR gas: ${error}`);
     }
@@ -349,33 +317,25 @@ function MapScreen({ route, navigation }) {
       setLeftLoading(true);
       start(new Date());
 
-      // const trip = await route.params.trip;
       const leftRes = await handleLeft(trip._id);
+      const newObj = {
+        ...leftRes,
+        date: Date.now(),
+      };
 
       const tripRes = await selectTable("offline_trip");
       let locPoint = JSON.parse(tripRes[tripRes.length - 1].locations);
-      locPoint.push(leftRes);
+      locPoint.push(newObj);
 
-      const res = await updateToTable(
+      await updateToTable(
         `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
         [JSON.stringify(locPoint)]
       );
 
-      // await insertToTable(
-      //   "INSERT INTO locations ( trip_id , lat , long , status , address ) values (?,?,?,?,?)",
-      //   [
-      //     leftRes.trip_id,
-      //     leftRes.lat,
-      //     leftRes.long,
-      //     leftRes.status,
-      //     JSON.stringify(leftRes.address),
-      //   ]
-      // );
-
       await reloadMapState();
-      setTimeout(() => {
-        setLeftLoading(false);
-      }, 1000);
+
+      setLeftLoading(false);
+
       // handleSuccess();
     } catch (error) {
       setLeftLoading(false);
@@ -389,26 +349,25 @@ function MapScreen({ route, navigation }) {
       setArrivedLoading(true);
       pause();
 
-      // const trip = await route.params.trip;
       const arrivedRes = await handleArrived(trip._id);
+      const newObj = {
+        ...arrivedRes,
+        date: Date.now(),
+      };
 
-      await createLocation(arrivedRes, token);
+      const tripRes = await selectTable("offline_trip");
+      let locPoint = JSON.parse(tripRes[tripRes.length - 1].locations);
+      locPoint.push(newObj);
 
-      await insertToTable(
-        "INSERT INTO locations ( trip_id , lat , long , status , address ) values (?,?,?,?,?)",
-        [
-          arrivedRes.trip_id,
-          arrivedRes.lat,
-          arrivedRes.long,
-          arrivedRes.status,
-          JSON.stringify(arrivedRes.address),
-        ]
+      await updateToTable(
+        `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
+        [JSON.stringify(locPoint)]
       );
 
       await reloadMapState();
-      setTimeout(() => {
-        setArrivedLoading(false);
-      }, 1000);
+
+      setArrivedLoading(false);
+
       // handleSuccess();
     } catch (error) {
       setArrivedLoading(false);
@@ -422,27 +381,24 @@ function MapScreen({ route, navigation }) {
       Keyboard.dismiss();
       setGasLoading(true);
 
-      const tripId = await route.params.trip._id;
-      const newDieselObj = {
-        ...data,
-        trip_id: tripId,
+      const gasObj = {
+        gas_station_id: data.gas_station_id,
+        trip_id: null,
+        gas_station_name: data.gas_station_name,
+        odometer: data.odometer,
+        liter: data.liter,
+        amount: data.amount,
         lat: currentLocation.latitude,
         long: currentLocation.longitude,
       };
 
-      await gasCar(newDieselObj, token);
-      await insertToTable(
-        "INSERT INTO gas (gas_station_id , trip_id , gas_station_name , odometer , liter , amount , lat , long ) values (?,?,?,?,?,?,?,?)",
-        [
-          data.gas_station_id,
-          tripId,
-          data.gas_station_name,
-          data.odometer,
-          data.liter,
-          data.amount,
-          currentLocation.latitude,
-          currentLocation.longitude,
-        ]
+      const tripRes = await selectTable("offline_trip");
+      let gas = JSON.parse(tripRes[tripRes.length - 1].gas);
+      gas.push(gasObj);
+
+      await updateToTable(
+        `UPDATE offline_trip SET gas = (?) WHERE id = ${tripRes.length}`,
+        [JSON.stringify(gas)]
       );
 
       setGas((prevState) => [
@@ -453,9 +409,9 @@ function MapScreen({ route, navigation }) {
       reset();
       setValue(null);
       setModalVisible(false);
-      setTimeout(() => {
-        setGasLoading(false);
-      }, 2000);
+
+      setGasLoading(false);
+
       // handleSuccess();
     } catch (error) {
       setGasLoading(false);
@@ -465,30 +421,13 @@ function MapScreen({ route, navigation }) {
   };
 
   const reloadMapState = async () => {
-    // const locRes = await selectTable("locations");
-    // if (locRes.length > 0) {
-    //   setTrip({
-    //     locations: [
-    //       ...locRes.map((item) => {
-    //         const locObj = {
-    //           ...item,
-    //           address: JSON.parse(item.address),
-    //         };
-    //         return locObj;
-    //       }),
-    //     ],
-    //   });
-    // }
-    const trip = await selectTable("locations");
-    if (locRes.length > 0) {
+    const tripRes = await selectTable("offline_trip");
+    const locPoint = JSON.parse(tripRes[tripRes.length - 1].locations);
+    if (locPoint.length > 0) {
       setTrip({
         locations: [
-          ...locRes.map((item) => {
-            const locObj = {
-              ...item,
-              address: JSON.parse(item.address),
-            };
-            return locObj;
+          ...locPoint.map((item) => {
+            return item;
           }),
         ],
       });
@@ -522,7 +461,6 @@ function MapScreen({ route, navigation }) {
     try {
       Keyboard.dismiss();
       setDoneLoading(true);
-      const trip_id = await route.params.trip._id;
 
       let mapPoints = [];
       const routeRes = await selectTable("route");
@@ -531,18 +469,17 @@ function MapScreen({ route, navigation }) {
         mapPoints.push(JSON.parse(item.points));
       });
 
-      const newObjt = {
-        odometer_done: vehicle_data.odometer_done,
-        points: mapPoints,
-      };
+      const tripRes = await selectTable("offline_trip");
 
-      const res = await updateTrip(trip_id, newObjt, token);
-      console.log("MAP SCREEN DONE: ", res);
+      await updateToTable(
+        `UPDATE offline_trip SET odometer_done = (?), points = (?)  WHERE id = ${tripRes.length}`,
+        [JSON.stringify(vehicle_data.odometer_done), JSON.stringify(mapPoints)]
+      );
 
       doneReset();
       setDoneLoading(false);
       setUnfinishTrip(false);
-      await AsyncStorage.removeItem("cache" + user.userId);
+
       navigation.reset({
         routes: [{ index: 0, name: routes.DASHBOARD }],
       });

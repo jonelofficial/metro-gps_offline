@@ -30,7 +30,7 @@ function MapDetailsScreen({ route, navigation }) {
   useEffect(() => {
     fetchGasStation();
     setPoints(item.points);
-    // console.log(item);
+    // console.log(item.trip_date);
   }, []);
 
   const handleResumeTrip = async () => {

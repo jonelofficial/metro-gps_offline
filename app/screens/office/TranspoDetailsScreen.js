@@ -130,7 +130,7 @@ function TranspoDetailsScreen({ navigation, route }) {
       // form.append("others", data.others);
 
       await insertToTable(
-        "INSERT INTO offline_trip (vehicle_id, odometer, image, companion, points, others, locations, gas) values (?,?,?,?,?,?,?,?)",
+        "INSERT INTO offline_trip (vehicle_id, odometer, image, companion, points, others, locations, gas, date) values (?,?,?,?,?,?,?,?,?)",
         [
           vehicleInfo.id,
           data.odometer,
@@ -144,6 +144,7 @@ function TranspoDetailsScreen({ navigation, route }) {
           data.others,
           JSON.stringify([]),
           JSON.stringify([]),
+          JSON.stringify(Date.now()),
         ]
       );
 
