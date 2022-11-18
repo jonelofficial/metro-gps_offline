@@ -27,7 +27,11 @@ import Screen from "../../components/Screen";
 import Spacer from "../../components/Spacer";
 import routes from "../../navigation/routes";
 import Scanner from "../../components/Scanner";
-import { deleteFromTable, insertToTable } from "../../utility/sqlite";
+import {
+  deleteFromTable,
+  insertToTable,
+  selectTable,
+} from "../../utility/sqlite";
 import useLocation from "../../hooks/useLocation";
 
 function TranspoDetailsScreen({ navigation, route }) {
@@ -106,7 +110,6 @@ function TranspoDetailsScreen({ navigation, route }) {
     try {
       Keyboard.dismiss();
       setLoading(true);
-      let tripData;
       const pointObj = [
         {
           latitude: await currentLocation.latitude,
@@ -114,50 +117,42 @@ function TranspoDetailsScreen({ navigation, route }) {
         },
       ];
 
-      const form = new FormData();
+      // const form = new FormData();
       // form.append("image", {
       //   name: new Date() + "_odometer",
       //   uri: data.odometer_image_path?.uri,
       //   type: "image/jpg",
       // });
-      form.append("vehicle_id", vehicleInfo.id);
-      form.append("odometer", data.odometer);
-      form.append("companion", JSON.stringify(companion));
-      form.append("points", JSON.stringify(pointObj));
-      form.append("others", data.others);
+      // form.append("vehicle_id", vehicleInfo.id);
+      // form.append("odometer", data.odometer);
+      // form.append("companion", JSON.stringify(companion));
+      // form.append("points", JSON.stringify(pointObj));
+      // form.append("others", data.others);
 
-      console.log(form);
-
-      if (noInternet) {
-        const newObj = {
-          id: offlineTrips.trips.length,
-          image_path: data.odometer_image_path.uri,
-          vehicle_id: vehicleInfo.id,
-          odometer: data.odometer,
-          companion: data.companion,
-        };
-        setOfflineTrips((prevState) => ({
-          ...prevState,
-          trips: [...prevState.trips, newObj],
-        }));
-      } else {
-        const res = await createTrip(form, token);
-        tripData = res.data;
-        if (!res) {
-          setLoading(false);
-          return alert("No server response. Please try Again");
-        }
-      }
+      await insertToTable(
+        "INSERT INTO offline_trip (vehicle_id, odometer, image, companion, points, others, locations, gas) values (?,?,?,?,?,?,?,?)",
+        [
+          vehicleInfo.id,
+          data.odometer,
+          JSON.stringify({
+            name: new Date() + "_odometer",
+            uri: data.odometer_image_path?.uri,
+            type: "image/jpg",
+          }),
+          JSON.stringify(companion),
+          JSON.stringify(pointObj),
+          data.others,
+          JSON.stringify([]),
+          JSON.stringify([]),
+        ]
+      );
 
       setImageUri(null);
       setLoading(false);
 
       reset();
-      noInternet
-        ? navigation.navigate(routes.MAP)
-        : navigation.navigate(routes.MAP, {
-            trip: tripData,
-          });
+
+      navigation.navigate(routes.MAP);
     } catch (error) {
       console.log(error);
       setLoading(false);

@@ -85,7 +85,7 @@ export const showTable = async () => {
     db.transaction((tx) => {
       tx.executeSql(
         "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name",
-        (transact, resultset) => resolve(resultset),
+        (transact, res) => resolve(res),
         (transact, err) => reject(err)
       );
     });

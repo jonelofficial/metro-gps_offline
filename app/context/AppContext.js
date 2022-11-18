@@ -10,7 +10,12 @@ import jwtDecode from "jwt-decode";
 import { Alert, Dimensions, Linking, LogBox, ToastAndroid } from "react-native";
 import AuthContext from "../auth/context";
 import authStorage from "../auth/storage";
-import { createTable, dropTable, showTable } from "../utility/sqlite";
+import {
+  createTable,
+  deleteFromTable,
+  dropTable,
+  showTable,
+} from "../utility/sqlite";
 import { useNetInfo } from "@react-native-community/netinfo";
 
 LogBox.ignoreLogs(["exported from 'deprecated-react-native-prop-types'."]);
@@ -52,7 +57,7 @@ function AppContext({ children }) {
 
   useEffect(() => {
     (async () => {
-      // await dropTable("route");
+      // await dropTable("offline_trip");
 
       // const res = await showTable();
       // console.log("T A B L E: ", res);
@@ -61,6 +66,12 @@ function AppContext({ children }) {
         "trip",
         "id integer primary key not null, _id TEXT, user_id TEXT, vehicle_id TEXT, locations LONGTEXT, diesels LONGTEXT, odometer INTEGER, odometer_done INTEGER, odometer_image_path TEXT, others LONGTEXT, companion LONGTEXT"
       );
+
+      await createTable(
+        "offline_trip",
+        "id integer primary key not null, vehicle_id TEXT , odometer TEXT, odometer_done TEXT, image LONGTEXT, companion LONGTEXT, points LONGTEXT, others TEXT, locations LONGTEXT , gas LONGTEXT"
+      );
+
       await createTable(
         "locations",
         "id integer primary key not null, trip_id TEXT, lat NUMBER, long NUMBER, status TEXT, address LONGTEXT"
@@ -68,7 +79,7 @@ function AppContext({ children }) {
 
       await createTable(
         "route",
-        "id integer primary key not null, points CLOB"
+        "id integer primary key not null, points LONGTEXT"
       );
 
       await createTable(

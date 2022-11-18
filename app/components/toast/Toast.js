@@ -11,7 +11,7 @@ import UserDetails from "../skeleton/UserDetails";
 import UserDetailsSkeleton from "../skeleton/UserDetailsSkeleton";
 import routes from "../../navigation/routes";
 
-function Toast({ scanned, showToast, data, setScanned, userData }) {
+function Toast({ scanned, showToast, data, setScanned, userData, noInternet }) {
   const navigation = useNavigation();
   const { logIn } = useAuth();
 
@@ -87,6 +87,8 @@ function Toast({ scanned, showToast, data, setScanned, userData }) {
             title={
               data.targetScreen === null && data.description === null
                 ? "NO VEHICLE FOUND"
+                : noInternet
+                ? "NO INTERNET"
                 : scanned && data.targetScreen === null
                 ? "SIGN IN"
                 : scanned
@@ -96,10 +98,13 @@ function Toast({ scanned, showToast, data, setScanned, userData }) {
             textStyle={styles.button}
             disabled={
               !scanned ||
-              (data.targetScreen === null && data.description === null)
+              (data.targetScreen === null && data.description === null) ||
+              noInternet
             }
             color={
               data.targetScreen === null && data.description === null
+                ? "disablePrimary"
+                : noInternet
                 ? "disablePrimary"
                 : scanned
                 ? "primary"

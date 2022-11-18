@@ -36,7 +36,11 @@ import colors from "../../config/colors";
 import routes from "../../navigation/routes";
 import GasModal from "../../components/modals/GasModal";
 import DoneModal from "../../components/modals/DoneModal";
-import { insertToTable, selectTable } from "../../utility/sqlite";
+import {
+  insertToTable,
+  selectTable,
+  updateToTable,
+} from "../../utility/sqlite";
 import { createLocation } from "../../api/office/LocationsApi";
 import { getPathLength } from "geolib";
 
@@ -157,33 +161,18 @@ function MapScreen({ route, navigation }) {
 
       setMapLoading(true);
       setOffScan(false);
-      await fetchGasStation();
+      // await fetchGasStation();
 
       // SQLITE
 
-      const routeTrip = await route.params.trip;
+      // const routeTrip = await route.params.trip;
 
-      const tripRes = await selectTable("trip");
+      const tripRes = await selectTable("offline_trip");
 
-      if (tripRes.length <= 0) {
-        await insertToTable(
-          "INSERT INTO trip (_id , user_id , vehicle_id  , odometer , odometer_image_path , others , companion ) values (?,?,?,?,?,?,?)",
-          [
-            routeTrip._id,
-            typeof routeTrip.user_id == "string"
-              ? routeTrip.user_id
-              : routeTrip.user_id._id,
-            typeof routeTrip.vehicle_id == "string"
-              ? routeTrip.vehicle_id
-              : routeTrip.vehicle_id._id,
-            routeTrip.odometer,
-            routeTrip.odometer_image_path,
-            JSON.stringify(routeTrip.others),
-            JSON.stringify(routeTrip.companion),
-          ]
-        );
-
-        routeTrip.points.map(async (item, index) => {
+      if (tripRes.length >= 0) {
+        // console.log(tripRes);
+        const pointObj = JSON.parse(tripRes[tripRes.length - 1].points);
+        pointObj.map(async (item) => {
           await insertToTable("INSERT INTO route (points) values (?)", [
             JSON.stringify(item),
           ]);
@@ -192,10 +181,11 @@ function MapScreen({ route, navigation }) {
         await reloadRoute();
       }
 
-      if (routeTrip.locations.length <= 0) {
+      const locPoint = JSON.parse(tripRes[tripRes.length - 1].locations);
+      if (locPoint.length <= 0) {
         await sqliteLeft();
       } else {
-        await routeTrip.locations.map(async (item) => {
+        await locPoint.map(async (item) => {
           await insertToTable(
             "INSERT INTO locations ( trip_id , lat , long , status , address ) values (?,?,?,?,?)",
             [
@@ -311,14 +301,14 @@ function MapScreen({ route, navigation }) {
     try {
       setItems([]);
 
-      if (!noInternet) {
-        const gasRes = await getGasStation(token);
-        setItems(
-          gasRes.data.map((item) => {
-            return { label: item.label, value: item._id };
-          })
-        );
-      }
+      // if (!noInternet) {
+      //   const gasRes = await getGasStation(token);
+      //   setItems(
+      //     gasRes.data.map((item) => {
+      //       return { label: item.label, value: item._id };
+      //     })
+      //   );
+      // }
     } catch (error) {
       alert(`ERROR gas: ${error}`);
     }
@@ -359,27 +349,34 @@ function MapScreen({ route, navigation }) {
       setLeftLoading(true);
       start(new Date());
 
-      const trip = await route.params.trip;
+      // const trip = await route.params.trip;
       const leftRes = await handleLeft(trip._id);
 
-      await createLocation(leftRes, token);
+      const tripRes = await selectTable("offline_trip");
+      let locPoint = JSON.parse(tripRes[tripRes.length - 1].locations);
+      locPoint.push(leftRes);
 
-      await insertToTable(
-        "INSERT INTO locations ( trip_id , lat , long , status , address ) values (?,?,?,?,?)",
-        [
-          leftRes.trip_id,
-          leftRes.lat,
-          leftRes.long,
-          leftRes.status,
-          JSON.stringify(leftRes.address),
-        ]
+      const res = await updateToTable(
+        `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
+        [JSON.stringify(locPoint)]
       );
+
+      // await insertToTable(
+      //   "INSERT INTO locations ( trip_id , lat , long , status , address ) values (?,?,?,?,?)",
+      //   [
+      //     leftRes.trip_id,
+      //     leftRes.lat,
+      //     leftRes.long,
+      //     leftRes.status,
+      //     JSON.stringify(leftRes.address),
+      //   ]
+      // );
 
       await reloadMapState();
       setTimeout(() => {
         setLeftLoading(false);
       }, 1000);
-      handleSuccess();
+      // handleSuccess();
     } catch (error) {
       setLeftLoading(false);
       alert("ERROR SQLITE LEFT");
@@ -392,7 +389,7 @@ function MapScreen({ route, navigation }) {
       setArrivedLoading(true);
       pause();
 
-      const trip = await route.params.trip;
+      // const trip = await route.params.trip;
       const arrivedRes = await handleArrived(trip._id);
 
       await createLocation(arrivedRes, token);
@@ -412,7 +409,7 @@ function MapScreen({ route, navigation }) {
       setTimeout(() => {
         setArrivedLoading(false);
       }, 1000);
-      handleSuccess();
+      // handleSuccess();
     } catch (error) {
       setArrivedLoading(false);
       alert("ERROR SQLITE ARRIVED");
@@ -468,7 +465,21 @@ function MapScreen({ route, navigation }) {
   };
 
   const reloadMapState = async () => {
-    const locRes = await selectTable("locations");
+    // const locRes = await selectTable("locations");
+    // if (locRes.length > 0) {
+    //   setTrip({
+    //     locations: [
+    //       ...locRes.map((item) => {
+    //         const locObj = {
+    //           ...item,
+    //           address: JSON.parse(item.address),
+    //         };
+    //         return locObj;
+    //       }),
+    //     ],
+    //   });
+    // }
+    const trip = await selectTable("locations");
     if (locRes.length > 0) {
       setTrip({
         locations: [
@@ -753,8 +764,8 @@ function MapScreen({ route, navigation }) {
             </View>
           </>
         ) : (
-          <ActivityIndicator visible={true} />
-          // <AppText>Loading</AppText>
+          // <ActivityIndicator visible={true} />
+          <AppText>Loading</AppText>
         )}
 
         <View style={[styles.success, { display: showSuccess }]}>

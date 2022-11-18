@@ -116,31 +116,31 @@ function DashboardScreen({ navigation }) {
         const tripCache = await cache.get(user.userId);
         if (tripCache === null) {
           await deleteFromTable("locations");
-          await deleteFromTable("trip");
+          await deleteFromTable("offline_trip");
           await deleteFromTable("route");
           await deleteFromTable("gas");
 
           await handleRefresh();
         } else {
           if (!noInternet) {
-            const trip = await selectTable("trip");
+            // const trip = await selectTable("trip");
 
-            let mapPoints = [];
-            const routeRes = await selectTable("route");
+            // let mapPoints = [];
+            // const routeRes = await selectTable("route");
 
-            await routeRes.map((item) => {
-              mapPoints.push(JSON.parse(item.points));
-            });
+            // await routeRes.map((item) => {
+            //   mapPoints.push(JSON.parse(item.points));
+            // });
 
-            const newObjt = {
-              points: mapPoints,
-            };
+            // const newObjt = {
+            //   points: mapPoints,
+            // };
 
-            const res = await updateTrip(trip[0]._id, newObjt, token);
-            console.log("DASHBOARD UNFINISH TRIP: ", res);
+            // const res = await updateTrip(trip[0]._id, newObjt, token);
+            // console.log("DASHBOARD UNFINISH TRIP: ", res);
 
             await deleteFromTable("locations");
-            await deleteFromTable("trip");
+            await deleteFromTable("offline_trip");
             await deleteFromTable("route");
             await deleteFromTable("gas");
             await AsyncStorage.removeItem("cache" + user.userId);
@@ -152,10 +152,10 @@ function DashboardScreen({ navigation }) {
           }
         }
 
-        // setOfflineGasStations([]);
-        // setOfflineVehicles([]);
-        // setOfflineVehicles(await selectTable("vehicles"));
-        // setOfflineGasStations(await selectTable("gas_station"));
+        setOfflineGasStations([]);
+        setOfflineVehicles([]);
+        setOfflineVehicles(await selectTable("vehicles"));
+        setOfflineGasStations(await selectTable("gas_station"));
       } catch (error) {
         alert("ERROR ON CACHE: ", error);
         console.log(error);

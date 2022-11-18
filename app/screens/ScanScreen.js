@@ -246,6 +246,7 @@ function ScanScreen() {
             showToast={isLoading}
             setScanned={setScanned}
             userData={userData}
+            noInternet={noInternet}
           />
         )}
       </Screen>
