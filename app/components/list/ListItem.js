@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { StyleSheet, View, TouchableOpacity } from "react-native";
+import { StyleSheet, View, TouchableOpacity, Button } from "react-native";
 import dayjs from "dayjs";
 
 import getPathLength from "geolib/es/getPathLength";
@@ -61,6 +61,10 @@ function ListItem({ onPress, item, setOffScan, setOffline }) {
   const name = dayjs(item.trip_date).format("h:mm A");
   const date = dayjs(item.trip_date).format("MM-DD-YY");
 
+  const handleSync = async () => {
+    console.log(item);
+  };
+
   return (
     <TouchableOpacity onPress={onPress}>
       <Fonts>
@@ -84,7 +88,7 @@ function ListItem({ onPress, item, setOffScan, setOffline }) {
               marginRight: 10,
               marginVertical: 7,
               padding: 2.5,
-              borderWidth: 1,
+              borderWidth: item?.offline === true ? 0 : 1,
               borderRadius: 5,
               borderColor:
                 item.odometer_done < 0 ||
@@ -106,10 +110,19 @@ function ListItem({ onPress, item, setOffScan, setOffline }) {
                     ? colors.light4
                     : colors.success,
                 marginHorizontal: 5,
+                display: item?.offline === true ? "none" : "flex",
               }}
             >{`#${
               item._id.length > 20 ? item._id.slice(20) : item._id
             }`}</AppText>
+            <View
+              style={{
+                justifyContent: "center",
+                display: item?.offline ? "flex" : "none",
+              }}
+            >
+              <Button title="add" color={colors.success} onPress={handleSync} />
+            </View>
           </View>
           {/*  */}
           <View style={styles.kmDetails}>
@@ -199,6 +212,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 10,
     backgroundColor: colors.light,
+    position: "relative",
   },
   name: {
     fontFamily: fonts.primaryName,

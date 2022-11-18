@@ -11,7 +11,12 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { findTrip, getTrip, updateTrip } from "../api/office/TripApi";
+import {
+  createTrip,
+  findTrip,
+  getTrip,
+  updateTrip,
+} from "../api/office/TripApi";
 import AppText from "../components/AppText";
 import AuthContext from "../auth/context";
 import AppHeading from "../components/AppHeading";
@@ -51,13 +56,16 @@ function DashboardScreen({ navigation }) {
     setOffScan,
     offline,
     setOffline,
+    token,
+    user,
+    setUser,
+    setToken,
+    offScan,
+    noInternet,
   } = useContext(AuthContext);
 
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);
-
-  const { token, user, setUser, setToken, offScan, noInternet } =
-    useContext(AuthContext);
 
   const fetchTrip = async () => {
     try {
@@ -108,7 +116,6 @@ function DashboardScreen({ navigation }) {
   };
 
   useEffect(() => {
-    // Handle if have an unsave trip from map screen
     (async () => {
       try {
         ToastAndroid.show(`Syncing`, ToastAndroid.SHORT);
@@ -124,9 +131,6 @@ function DashboardScreen({ navigation }) {
         });
 
         // await deleteFromTable("offline_trip");
-        // await deleteFromTable("trip");
-        // await deleteFromTable("locations");
-        // await deleteFromTable("gas");
         await deleteFromTable("route");
 
         setImage(user.profile ? `${BASEURL}/${user.profile}` : null);
@@ -173,6 +177,30 @@ function DashboardScreen({ navigation }) {
     setModalVisible(!isModalVisible);
   };
 
+  const handleSync = async () => {
+    setLoading(true);
+    const res = await selectTable("offline_trip");
+    if (res.length >= 0) {
+      await res.map(async (item, index) => {
+        if (item.odometer_done !== null) {
+          const form = new FormData();
+          form.append("image", JSON.parse(item.image));
+          form.append("vehicle_id", item.vehicle_id);
+          form.append("odometer", JSON.parse(item.odometer));
+          form.append("companion", item.companion);
+          form.append("points", item.points);
+          form.append("others", item.others);
+          form.append("trip_date", JSON.parse(item.date));
+
+          console.log(form);
+
+          // console.log(`I N D E X : ${index}`, tripRes);
+        }
+      });
+    }
+    await handleRefresh();
+  };
+
   const handleRefresh = async () => {
     try {
       setOffScan(false);
@@ -197,7 +225,7 @@ function DashboardScreen({ navigation }) {
               diesels: JSON.parse(item.gas),
               locations: JSON.parse(item.locations),
               odometer: JSON.parse(item.odometer),
-              odometer_done: JSON.parse(item.odometer_done),
+              odometer_done: parseInt(JSON.parse(item.odometer_done)),
               points: JSON.parse(item.points),
               user_id: {
                 _id: user.userId,
@@ -297,8 +325,6 @@ function DashboardScreen({ navigation }) {
   const onRefresh = () => {
     if (endLoading === false) {
       handleRefresh();
-    } else {
-      return null;
     }
   };
 
@@ -312,8 +338,6 @@ function DashboardScreen({ navigation }) {
       setEndLoading(true);
       setPage((value) => value + 1);
       await searchFetchTrip();
-    } else {
-      return setEndLoading(false);
     }
   };
 
@@ -360,7 +384,7 @@ function DashboardScreen({ navigation }) {
               ? ``
               : `${data} item`}
           </AppHeading>
-          <View
+          {/* <View
             style={{
               alignItems: "center",
               position: "absolute",
@@ -369,12 +393,8 @@ function DashboardScreen({ navigation }) {
               display: offline ? "flex" : "none",
             }}
           >
-            <Button
-              title="sync"
-              color={colors.success}
-              onPress={() => console.log("click sync")}
-            />
-          </View>
+            <Button title="sync" color={colors.success} onPress={handleSync} />
+          </View> */}
         </Fonts>
         <Spacer />
 
