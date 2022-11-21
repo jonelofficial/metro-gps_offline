@@ -154,7 +154,6 @@ function MapScreen({ navigation }) {
       // SQLITE
 
       const tripRes = await selectTable("offline_trip");
-      console.log(tripRes[tripRes.length - 1].points);
 
       if (tripRes.length >= 0) {
         const pointObj = JSON.parse(tripRes[tripRes.length - 1].points);
@@ -594,9 +593,9 @@ function MapScreen({ navigation }) {
                       ? "light"
                       : trip === undefined
                       ? "light"
-                      : noInternet
-                      ? "light"
-                      : "danger"
+                      : // : noInternet
+                        // ? "light"
+                        "danger"
                   }
                   onPress={sqliteLeft}
                   isLoading={leftLoading}
@@ -605,7 +604,7 @@ function MapScreen({ navigation }) {
                     arrivedLoading ||
                     (trip?.locations.length % 2 !== 0 &&
                       trip?.locations.length > 0) ||
-                    noInternet ||
+                    // noInternet ||
                     trip === undefined
                   }
                 />
@@ -621,9 +620,9 @@ function MapScreen({ navigation }) {
                       ? "light"
                       : trip === undefined
                       ? "light"
-                      : noInternet
-                      ? "light"
-                      : "success"
+                      : // : noInternet
+                        // ? "light"
+                        "success"
                   }
                   onPress={sqliteArrived}
                   isLoading={arrivedLoading}
@@ -632,7 +631,7 @@ function MapScreen({ navigation }) {
                     leftLoading ||
                     (trip?.locations.length % 2 === 0 &&
                       trip?.locations.length > 0) ||
-                    noInternet ||
+                    // noInternet ||
                     trip === undefined
                   }
                 />
@@ -647,9 +646,9 @@ function MapScreen({ navigation }) {
                       backgroundColor:
                         arrivedLoading || leftLoading
                           ? colors.light
-                          : noInternet
-                          ? colors.light
-                          : trip === undefined
+                          : // : noInternet
+                          // ? colors.light
+                          trip === undefined
                           ? colors.light
                           : colors.primary,
                     },
@@ -657,7 +656,7 @@ function MapScreen({ navigation }) {
                   disabled={
                     arrivedLoading ||
                     leftLoading ||
-                    noInternet ||
+                    // noInternet ||
                     trip === undefined
                   }
                 >
@@ -679,9 +678,9 @@ function MapScreen({ navigation }) {
                     ? "light"
                     : trip?.locations.length === 0 && trip?.locations.length > 0
                     ? "light"
-                    : noInternet
-                    ? "light"
-                    : leftLoading
+                    : // : noInternet
+                    // ? "light"
+                    leftLoading
                     ? "light"
                     : arrivedLoading
                     ? "light"
@@ -694,8 +693,9 @@ function MapScreen({ navigation }) {
                   (trip?.locations.length === 0 &&
                     trip?.locations.length > 0) ||
                   arrivedLoading ||
-                  leftLoading ||
-                  noInternet
+                  leftLoading
+                  // ||
+                  // noInternet
                 }
               />
             </View>

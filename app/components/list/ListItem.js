@@ -1,5 +1,11 @@
 import React, { useEffect } from "react";
-import { StyleSheet, View, TouchableOpacity, Button } from "react-native";
+import {
+  StyleSheet,
+  View,
+  TouchableOpacity,
+  Button,
+  ActivityIndicator,
+} from "react-native";
 import dayjs from "dayjs";
 
 import getPathLength from "geolib/es/getPathLength";
@@ -8,8 +14,22 @@ import colors from "../../config/colors";
 import fonts from "../../config/fonts";
 import AppText from "../AppText";
 import Fonts from "../Fonts";
+import { createTrip } from "../../api/office/TripApi";
+import { createBulkLocation } from "../../api/office/LocationsApi";
+import { gasCarBulk } from "../../api/office/DieselApi";
+import { deleteFromTable } from "../../utility/sqlite";
 
-function ListItem({ onPress, item, setOffScan, setOffline }) {
+function ListItem({
+  onPress,
+  item,
+  setOffScan,
+  syncing,
+  setSyncing,
+  token,
+  handleRefresh,
+  offScan,
+  noInternet,
+}) {
   let newMinutes = 0;
   let newHours = 0;
   let newLocations = [];
@@ -27,12 +47,12 @@ function ListItem({ onPress, item, setOffScan, setOffline }) {
     if (
       item.odometer_done < 0 ||
       newLocations.length % 2 !== 0 ||
-      item.odometer_done == null
+      item.odometer_done == null ||
+      item.odometer_done < 0
     ) {
       setOffScan(true);
     }
-    item?.offline === true && setOffline(true);
-    // console.log("T E S T  :", item);
+    // console.log("T E S T  :", item.odometer_done);
   }, []);
 
   newLocations.length % 2 === 0 &&
@@ -62,9 +82,34 @@ function ListItem({ onPress, item, setOffScan, setOffline }) {
   const date = dayjs(item.trip_date).format("MM-DD-YY");
 
   const handleSync = async () => {
-    console.log(item);
-  };
+    try {
+      if (!noInternet) {
+        setSyncing(true);
+        setOffScan(false);
+        const form = new FormData();
+        form.append("vehicle_id", item.vehicle_id);
+        form.append("odometer", item.odometer);
+        form.append("odometer_done", item.odometer_done);
+        item?.image.uri !== null && form.append("image", item.image);
+        form.append("companion", JSON.stringify(item.companion));
+        form.append("points", JSON.stringify(item.points));
+        form.append("others", item.others);
+        form.append("trip_date", item.trip_date);
 
+        const tripRes = await createTrip(form, token);
+
+        await createBulkLocation(item.locations, tripRes.data._id, token);
+        await gasCarBulk(item.diesels, tripRes.data._id, token);
+        await deleteFromTable(`offline_trip WHERE id=${item._id}`);
+
+        await handleRefresh();
+        setSyncing(false);
+      }
+    } catch (error) {
+      alert("HANDLE SYNC ERROR: ", error);
+      console.log(error);
+    }
+  };
   return (
     <TouchableOpacity onPress={onPress}>
       <Fonts>
@@ -121,7 +166,17 @@ function ListItem({ onPress, item, setOffScan, setOffline }) {
                 display: item?.offline ? "flex" : "none",
               }}
             >
-              <Button title="add" color={colors.success} onPress={handleSync} />
+              {!syncing && (
+                <Button
+                  title="add"
+                  color={
+                    !offScan && !noInternet ? colors.success : colors.light
+                  }
+                  onPress={handleSync}
+                  disabled={offScan || noInternet}
+                />
+              )}
+              {syncing && <ActivityIndicator />}
             </View>
           </View>
           {/*  */}

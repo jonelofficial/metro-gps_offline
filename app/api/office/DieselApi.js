@@ -17,3 +17,20 @@ export const gasCar = async (data, token) => {
     console.log("DIESEL CREATE API ERROR: ", error);
   }
 };
+
+export const gasCarBulk = async (obj, id, token) => {
+  try {
+    const res = await fetch(`${tripUrl}/bulk?id=${id}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(obj),
+    });
+    const json = await res.json();
+    return json;
+  } catch (error) {
+    console.log("DIESEL BULK ERROR: ", error);
+  }
+};

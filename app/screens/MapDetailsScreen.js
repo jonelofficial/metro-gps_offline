@@ -22,7 +22,7 @@ function MapDetailsScreen({ route, navigation }) {
 
   const map = useRef();
 
-  const { token, user } = useContext(AuthContext);
+  const { token, user, offlineGasStations } = useContext(AuthContext);
   const { item } = route.params;
 
   const latlong = item.locations;
@@ -41,10 +41,17 @@ function MapDetailsScreen({ route, navigation }) {
 
   const fetchGasStation = async () => {
     try {
+      // setGasStation([]);
+      // const gasRes = await getGasStation(token);
+      // setGasStation(
+      //   gasRes.data.map((item) => {
+      //     return { label: item.label, value: item._id };
+      //   })
+      // );
       setGasStation([]);
-      const gasRes = await getGasStation(token);
+
       setGasStation(
-        gasRes.data.map((item) => {
+        offlineGasStations.map((item) => {
           return { label: item.label, value: item._id };
         })
       );

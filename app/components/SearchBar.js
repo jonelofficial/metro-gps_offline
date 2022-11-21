@@ -22,6 +22,7 @@ function SearchBar({
   setLoading,
   page,
   setTripDate,
+  syncing,
 }) {
   const [datePicker, setDatePicker] = useState(false);
   const [date, setDate] = useState(new Date());
@@ -91,7 +92,7 @@ function SearchBar({
             <Ionicons name="ios-close-outline" size={20} style={styles.close} />
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity onPress={showDatePicker}>
+          <TouchableOpacity onPress={showDatePicker} disabled={syncing}>
             <Ionicons
               name="ios-calendar-sharp"
               style={styles.dateIcon}

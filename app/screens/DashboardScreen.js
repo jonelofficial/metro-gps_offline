@@ -50,6 +50,7 @@ function DashboardScreen({ navigation }) {
   const [isModalVisible, setModalVisible] = useState(false);
   const [page, setPage] = useState(1);
   const [tripDate, setTripDate] = useState();
+  const [syncing, setSyncing] = useState(false);
   const {
     setOfflineVehicles,
     setOfflineGasStations,
@@ -216,28 +217,35 @@ function DashboardScreen({ navigation }) {
       const res = await selectTable("offline_trip");
 
       if (res.length >= 0) {
+        setOffline(true);
         await res.reverse().map((item, index) => {
           setTrips((prevState) => [
             ...prevState,
             {
               _id: res.length - index,
+              vehicle_id: item.vehicle_id,
               companion: JSON.parse(item.companion),
               diesels: JSON.parse(item.gas),
               locations: JSON.parse(item.locations),
               odometer: JSON.parse(item.odometer),
               odometer_done: parseInt(JSON.parse(item.odometer_done)),
               points: JSON.parse(item.points),
+              image: JSON.parse(item.image),
               user_id: {
                 _id: user.userId,
                 trip_template: user.trip_template,
               },
               offline: true,
               trip_date: JSON.parse(item.date),
+              others: item.others,
+              locations: JSON.parse(item.locations),
+              diesels: JSON.parse(item.gas),
             },
           ]);
         });
         totalItems = totalItems + res.length;
       }
+
       if (!noInternet) {
         const res = await getTrip(token, 1);
         res.data.map((item) => {
@@ -314,7 +322,13 @@ function DashboardScreen({ navigation }) {
     return (
       <ListItem
         setOffScan={setOffScan}
+        offScan={offScan}
         setOffline={setOffline}
+        token={token}
+        handleRefresh={handleRefresh}
+        setSyncing={setSyncing}
+        syncing={syncing}
+        noInternet={noInternet}
         item={item}
         onPress={() => navigation.navigate(routes.MAPVIEW, { item })}
       />
@@ -323,18 +337,32 @@ function DashboardScreen({ navigation }) {
 
   // Refresh
   const onRefresh = () => {
-    if (endLoading === false) {
+    if (endLoading === false && !syncing) {
       handleRefresh();
+    } else {
+      alert("Please wait to finish syncing");
     }
   };
 
   // Reached End
   const onEndReached = async () => {
-    if (data >= 25 && noData === false && text === null && !endLoading) {
+    if (
+      data >= 25 &&
+      noData === false &&
+      text === null &&
+      !endLoading &&
+      !syncing
+    ) {
       setEndLoading(true);
       setPage((value) => value + 1);
       await fetchTrip();
-    } else if (data >= 25 && noData === false && text && !endLoading) {
+    } else if (
+      data >= 25 &&
+      noData === false &&
+      text &&
+      !endLoading &&
+      !syncing
+    ) {
       setEndLoading(true);
       setPage((value) => value + 1);
       await searchFetchTrip();
@@ -354,9 +382,9 @@ function DashboardScreen({ navigation }) {
           }
         />
         <SearchBar
+          syncing={syncing}
           setData={setData}
           setTrips={setTrips}
-          // populate={user.user.trip_template}
           user_id={user.userId}
           token={token}
           fetchTrip={handleRefresh}

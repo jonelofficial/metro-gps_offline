@@ -130,13 +130,13 @@ function TranspoDetailsScreen({ navigation, route }) {
       // form.append("others", data.others);
 
       await insertToTable(
-        "INSERT INTO offline_trip (vehicle_id, odometer, image, companion, points, others, locations, gas, date) values (?,?,?,?,?,?,?,?,?)",
+        "INSERT INTO offline_trip (vehicle_id, odometer, image, companion, points, others, locations, gas, date, odometer_done) values (?,?,?,?,?,?,?,?,?,?)",
         [
           vehicleInfo.id,
           data.odometer,
           JSON.stringify({
             name: new Date() + "_odometer",
-            uri: data.odometer_image_path?.uri,
+            uri: data.odometer_image_path?.uri || null,
             type: "image/jpg",
           }),
           JSON.stringify(companion),
@@ -145,6 +145,7 @@ function TranspoDetailsScreen({ navigation, route }) {
           JSON.stringify([]),
           JSON.stringify([]),
           JSON.stringify(Date.now()),
+          -1,
         ]
       );
 
@@ -360,8 +361,9 @@ function TranspoDetailsScreen({ navigation, route }) {
             <Spacer />
             <SubmitButton
               title={user.trip_template === "office" ? "Drive" : "Next"}
-              color={noInternet ? "light" : "success"}
-              disabled={noInternet}
+              color={"success"}
+              // color={noInternet ? "light" : "success"}
+              // disabled={noInternet}
             />
           </FormProvider>
         </Screen>
