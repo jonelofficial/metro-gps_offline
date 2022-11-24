@@ -166,6 +166,18 @@ function ListItem({
                 display: item?.offline ? "flex" : "none",
               }}
             >
+              {/* {!isLoading && (
+                <Button
+                  title="add"
+                  color={
+                    !offScan && !noInternet ? colors.success : colors.light
+                  }
+                  onPress={handleSync}
+                  disabled={offScan || noInternet}
+                />
+              )}
+
+              {isLoading && <ActivityIndicator />} */}
               {!syncing && (
                 <Button
                   title="add"

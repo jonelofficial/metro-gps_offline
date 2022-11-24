@@ -2,7 +2,6 @@ import React, { useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
-  Button,
   FlatList,
   StyleSheet,
   ToastAndroid,
@@ -11,12 +10,7 @@ import {
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-import {
-  createTrip,
-  findTrip,
-  getTrip,
-  updateTrip,
-} from "../api/office/TripApi";
+import { findTrip, getTrip } from "../api/office/TripApi";
 import AppText from "../components/AppText";
 import AuthContext from "../auth/context";
 import AppHeading from "../components/AppHeading";
@@ -131,6 +125,8 @@ function DashboardScreen({ navigation }) {
           },
         });
 
+        // console.log(await selectTable("offline_trip"));
+
         // await deleteFromTable("offline_trip");
         await deleteFromTable("route");
 
@@ -176,30 +172,6 @@ function DashboardScreen({ navigation }) {
 
   const toggleModal = () => {
     setModalVisible(!isModalVisible);
-  };
-
-  const handleSync = async () => {
-    setLoading(true);
-    const res = await selectTable("offline_trip");
-    if (res.length >= 0) {
-      await res.map(async (item, index) => {
-        if (item.odometer_done !== null) {
-          const form = new FormData();
-          form.append("image", JSON.parse(item.image));
-          form.append("vehicle_id", item.vehicle_id);
-          form.append("odometer", JSON.parse(item.odometer));
-          form.append("companion", item.companion);
-          form.append("points", item.points);
-          form.append("others", item.others);
-          form.append("trip_date", JSON.parse(item.date));
-
-          console.log(form);
-
-          // console.log(`I N D E X : ${index}`, tripRes);
-        }
-      });
-    }
-    await handleRefresh();
   };
 
   const handleRefresh = async () => {

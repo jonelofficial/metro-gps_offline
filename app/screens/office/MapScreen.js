@@ -21,9 +21,7 @@ import { mapDoneSchema, mapGasSchema } from "../../config/schema";
 
 import AppButton from "../../components/AppButton";
 import AuthContext from "../../auth/context";
-import ActivityIndicator from "../../components/indicator/ActivityIndicator";
 import AppText from "../../components/AppText";
-import cache from "../../utility/cache";
 import DrivingIndicator from "../../components/indicator/DrivingIndicator";
 
 import Screen from "../../components/Screen";
@@ -40,6 +38,7 @@ import {
   updateToTable,
 } from "../../utility/sqlite";
 import { getPathLength } from "geolib";
+import ActivityIndicator from "../../components/indicator/ActivityIndicator";
 
 function MapScreen({ navigation }) {
   const [trip, setTrip] = useState({ locations: [] });
@@ -249,6 +248,11 @@ function MapScreen({ navigation }) {
   const _handleAppStateChange = async (nextAppState) => {
     let notif;
     if (nextAppState === "background") {
+      updateToTable(
+        `UPDATE offline_trip SET  points = (?)  WHERE id = (SELECT MAX(id) FROM offline_trip)`,
+        [JSON.stringify(points)]
+      );
+
       const content = {
         title: `Fresh Morning ${
           user.first_name[0].toUpperCase() +
@@ -335,7 +339,7 @@ function MapScreen({ navigation }) {
 
       setLeftLoading(false);
 
-      // handleSuccess();
+      handleSuccess();
     } catch (error) {
       setLeftLoading(false);
       alert("ERROR SQLITE LEFT");
@@ -367,7 +371,7 @@ function MapScreen({ navigation }) {
 
       setArrivedLoading(false);
 
-      // handleSuccess();
+      handleSuccess();
     } catch (error) {
       setArrivedLoading(false);
       alert("ERROR SQLITE ARRIVED");
@@ -411,7 +415,7 @@ function MapScreen({ navigation }) {
 
       setGasLoading(false);
 
-      // handleSuccess();
+      handleSuccess();
     } catch (error) {
       setGasLoading(false);
       alert("ERROR GAS PROCESS");
@@ -701,8 +705,8 @@ function MapScreen({ navigation }) {
             </View>
           </>
         ) : (
-          // <ActivityIndicator visible={true} />
-          <AppText>Loading</AppText>
+          <ActivityIndicator visible={true} />
+          // <AppText>Loading</AppText>
         )}
 
         <View style={[styles.success, { display: showSuccess }]}>

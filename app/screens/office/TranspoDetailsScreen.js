@@ -13,7 +13,7 @@ import {
 import getPathLength from "geolib/es/getPathLength";
 
 import { transpoDetailsSchema } from "../../config/schema";
-import { createTrip, getVehicleTrip } from "../../api/office/TripApi";
+import { getVehicleTrip } from "../../api/office/TripApi";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import AppText from "../../components/AppText";
 import AppTextInput from "../../components/AppTextInput";
@@ -27,12 +27,7 @@ import Screen from "../../components/Screen";
 import Spacer from "../../components/Spacer";
 import routes from "../../navigation/routes";
 import Scanner from "../../components/Scanner";
-import {
-  deleteFromTable,
-  insertToTable,
-  selectTable,
-} from "../../utility/sqlite";
-import useLocation from "../../hooks/useLocation";
+import { insertToTable, selectTable } from "../../utility/sqlite";
 
 function TranspoDetailsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
@@ -50,14 +45,7 @@ function TranspoDetailsScreen({ navigation, route }) {
   const [isOthers, setIsOthers] = useState(false);
 
   //
-  const {
-    user,
-    token,
-    setOfflineTrips,
-    offlineTrips,
-    noInternet,
-    currentLocation,
-  } = useContext(AuthContext);
+  const { user, token, noInternet, currentLocation } = useContext(AuthContext);
 
   useEffect(() => {
     if (route.params?.image) {
@@ -66,19 +54,32 @@ function TranspoDetailsScreen({ navigation, route }) {
       setImageUri(route.params.image.uri);
     } else if (route.params?.params.vehicle_id) {
       (async () => {
-        const vehicleTrip = await getVehicleTrip(
-          route.params.params.vehicle_id.id,
-          token
-        );
-        setOdometer(vehicleTrip);
-        if (vehicleTrip.data?.points) {
-          const meter = getPathLength(vehicleTrip.data?.points);
+        if (!noInternet) {
+          const vehicleTrip = await getVehicleTrip(
+            route.params.params.vehicle_id.id,
+            token
+          );
+          setOdometer(vehicleTrip);
+          if (vehicleTrip.data?.points) {
+            const meter = getPathLength(vehicleTrip.data?.points);
+            const km = meter / 1000;
+
+            setEstimatedOdo(
+              parseFloat(km.toFixed(1)) + vehicleTrip.data?.odometer
+            );
+          }
+        } else {
+          const res = await selectTable("offline_trip");
+          console.log();
+          setOdometer(parseInt(res[res.length - 1].odometer_done));
+          const meter = getPathLength(JSON.parse(res[res.length - 1].points));
           const km = meter / 1000;
 
           setEstimatedOdo(
-            parseFloat(km.toFixed(1)) + vehicleTrip.data?.odometer
+            parseFloat(km.toFixed(1)) + parseInt(res[res.length - 1].odometer)
           );
         }
+
         setLoading(false);
       })();
 
