@@ -50,6 +50,32 @@ export default useLocation = () => {
     }
   };
 
+  const handleInterval = async (trip) => {
+    try {
+      const result = await Location.getCurrentPositionAsync({
+        enableHighAccuracy: true,
+        accuracy: Location.LocationAccuracy.BestForNavigation,
+      });
+
+      const res = await Location.reverseGeocodeAsync({
+        latitude: result.coords.latitude,
+        longitude: result.coords.longitude,
+      });
+
+      const api = {
+        trip_id: trip,
+        lat: result.coords.latitude,
+        long: result.coords.longitude,
+        address: res,
+        status: "interval",
+      };
+
+      return api;
+    } catch (error) {
+      console.log("HANDLE ARRIVED ERROR: ", error);
+    }
+  };
+
   const handleArrived = async (trip) => {
     try {
       const result = await Location.getCurrentPositionAsync({
@@ -199,5 +225,6 @@ export default useLocation = () => {
     offlineHandleArrived,
     offlineHandleLeft,
     getLocation,
+    handleInterval,
   };
 };

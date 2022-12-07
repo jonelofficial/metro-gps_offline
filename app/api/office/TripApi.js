@@ -84,3 +84,18 @@ export const getVehicleTrip = async (id, token) => {
     console.log("GET VEHICLE TRIP ERROR: ", error);
   }
 };
+
+export const deleteTrip = async (id, token) => {
+  try {
+    const response = await fetch(`${process.env.BASEURL}/office/trip/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    const json = await response.json();
+    return json;
+  } catch (error) {
+    console.log("DELETE ALL TRIP ERROR: ", error);
+  }
+};

@@ -54,29 +54,47 @@ function TranspoDetailsScreen({ navigation, route }) {
       setImageUri(route.params.image.uri);
     } else if (route.params?.params.vehicle_id) {
       (async () => {
-        if (!noInternet) {
-          const vehicleTrip = await getVehicleTrip(
-            route.params.params.vehicle_id.id,
-            token
-          );
-          setOdometer(vehicleTrip);
-          if (vehicleTrip.data?.points) {
-            const meter = getPathLength(vehicleTrip.data?.points);
-            const km = meter / 1000;
+        // if (!noInternet) {
+        //   const vehicleTrip = await getVehicleTrip(
+        //     route.params.params.vehicle_id.id,
+        //     token
+        //   );
+        //   setOdometer(vehicleTrip);
+        //   if (vehicleTrip.data?.points) {
+        //     const meter = getPathLength(vehicleTrip.data?.points);
+        //     const km = meter / 1000;
 
-            setEstimatedOdo(
-              parseFloat(km.toFixed(1)) + vehicleTrip.data?.odometer
-            );
-          }
-        } else {
-          const res = await selectTable("offline_trip");
-          console.log();
-          setOdometer(parseInt(res[res.length - 1].odometer_done));
+        //     setEstimatedOdo(
+        //       // parseFloat(km.toFixed(1)) + vehicleTrip.data?.odometer.toFixed(1)
+        //       parseFloat(km.toFixed(1)) +
+        //         parseFloat(vehicleTrip.data?.odometer.toFixed(1))
+        //     );
+
+        //     console.log(km.toFixed(1));
+        //   }
+        // } else {
+        //   const res = await selectTable("offline_trip");
+        //   setOdometer(parseInt(res[res.length - 1].odometer_done));
+        //   const meter = getPathLength(JSON.parse(res[res.length - 1].points));
+        //   const km = meter / 1000;
+
+        //   setEstimatedOdo(
+        //     parseFloat(km.toFixed(1)) +
+        //       parseFloat(res[res.length - 1].odometer.toFixed(1))
+        //   );
+        // }
+
+        const res = await selectTable("offline_trip");
+        if (res.length) {
+          setOdometer({
+            data: parseFloat(JSON.parse(res[res.length - 1].odometer_done)),
+          });
           const meter = getPathLength(JSON.parse(res[res.length - 1].points));
           const km = meter / 1000;
+          const odo = parseFloat(res[res.length - 1].odometer);
 
           setEstimatedOdo(
-            parseFloat(km.toFixed(1)) + parseInt(res[res.length - 1].odometer)
+            parseFloat(km.toFixed(1)) + parseFloat(parseFloat(odo.toFixed(1)))
           );
         }
 
@@ -241,7 +259,7 @@ function TranspoDetailsScreen({ navigation, route }) {
               name="odometer"
               placeholder="Input current odometer"
               keyboardType="numeric"
-              defaultValue={estimatedOdo ? `${estimatedOdo}` : null}
+              defaultValue={estimatedOdo ? `${estimatedOdo.toFixed(1)}` : null}
               // defaultValue={odometer?.data ? `${odometer.data.odometer}` : null}
               // disabled={odometer?.data ? false : true}
             />
@@ -372,6 +390,7 @@ function TranspoDetailsScreen({ navigation, route }) {
       {loading === true && (
         <View style={styles.container}>
           <ActivityIndicator visible={true} />
+          {/* <AppText>Loading</AppText> */}
         </View>
       )}
       {(isCompanion || isOthers) && (

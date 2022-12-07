@@ -58,7 +58,7 @@ function AppContext({ children }) {
 
   useEffect(() => {
     (async () => {
-      // await dropTable("offline_trip");
+      // await dropTable("user");
       // await dropTable("locations");
 
       // const res = await showTable();
@@ -87,6 +87,11 @@ function AppContext({ children }) {
       await createTable(
         "gas",
         "id integer primary key not null, gas_station_id TEXT, trip_id TEXT, gas_station_name TEXT, odometer NUMBER, liter NUMBER, lat NUMBER, long NUMBER , amount NUMBER"
+      );
+
+      await createTable(
+        "user",
+        "id integer primary key not null, username TEXT, password TEXT,  token TEXT "
       );
     })();
   }, []);

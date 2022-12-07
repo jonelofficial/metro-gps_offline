@@ -14,10 +14,10 @@ import colors from "../../config/colors";
 import fonts from "../../config/fonts";
 import AppText from "../AppText";
 import Fonts from "../Fonts";
-import { createTrip } from "../../api/office/TripApi";
+import { createTrip, deleteTrip } from "../../api/office/TripApi";
 import { createBulkLocation } from "../../api/office/LocationsApi";
 import { gasCarBulk } from "../../api/office/DieselApi";
-import { deleteFromTable } from "../../utility/sqlite";
+import { deleteFromTable, selectTable } from "../../utility/sqlite";
 
 function ListItem({
   onPress,
@@ -52,7 +52,7 @@ function ListItem({
     ) {
       setOffScan(true);
     }
-    // console.log("T E S T  :", item.odometer_done);
+    // console.log("T E S T  :", item.locations.length);
   }, []);
 
   newLocations.length % 2 === 0 &&
@@ -60,8 +60,8 @@ function ListItem({
       if (index % 2 === 0) {
         const date1 = dayjs(newLocations[index + 1].date);
         const date2 = dayjs(location.date);
-        const minutes = date1.diff(date2, "minutes");
-        const hours = date1.diff(date2, "h");
+        const minutes = Math.abs(date1.diff(date2, "minutes"));
+        const hours = Math.abs(date1.diff(date2, "h"));
         newMinutes = newMinutes + minutes;
         newHours = newHours + hours;
       }
@@ -97,12 +97,35 @@ function ListItem({
         form.append("trip_date", item.trip_date);
 
         const tripRes = await createTrip(form, token);
+        if (tripRes?.data._id) {
+          const locations = await createBulkLocation(
+            item.locations,
+            tripRes.data._id,
+            token
+          );
+          // console.log(locations);
+          const diesels = await gasCarBulk(
+            item.diesels,
+            tripRes.data._id,
+            token
+          );
+          // console.log(diesels);
 
-        await createBulkLocation(item.locations, tripRes.data._id, token);
-        await gasCarBulk(item.diesels, tripRes.data._id, token);
-        await deleteFromTable(`offline_trip WHERE id=${item._id}`);
+          if ((locations.tally === true) & (diesels.tally === true)) {
+            await deleteFromTable(`offline_trip WHERE id=${item._id}`);
+            await handleRefresh();
+          } else {
+            await deleteTrip(tripRes.data._id, token);
+            alert(
+              `Syncing ${
+                !locations.tally ? "locations" : "diesels"
+              } not match. Please try again`
+            );
+          }
+        } else {
+          alert("Syncing error. Please try again");
+        }
 
-        await handleRefresh();
         setSyncing(false);
       }
     } catch (error) {
@@ -110,6 +133,7 @@ function ListItem({
       console.log(error);
     }
   };
+
   return (
     <TouchableOpacity onPress={onPress}>
       <Fonts>
@@ -166,21 +190,9 @@ function ListItem({
                 display: item?.offline ? "flex" : "none",
               }}
             >
-              {/* {!isLoading && (
-                <Button
-                  title="add"
-                  color={
-                    !offScan && !noInternet ? colors.success : colors.light
-                  }
-                  onPress={handleSync}
-                  disabled={offScan || noInternet}
-                />
-              )}
-
-              {isLoading && <ActivityIndicator />} */}
               {!syncing && (
                 <Button
-                  title="add"
+                  title="sync"
                   color={
                     !offScan && !noInternet ? colors.success : colors.light
                   }

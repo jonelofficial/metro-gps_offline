@@ -61,7 +61,8 @@ function MapScreen({ navigation }) {
   // DONE MODAL
   const [doneModal, setDoneModal] = useState(false);
   const [doneLoading, setDoneLoading] = useState(false);
-  const [estimatedOdo, setEstimatedOdo] = useState();
+  const [estimatedOdo, setEstimatedOdo] = useState(0);
+
   //Context
   const {
     user,
@@ -83,6 +84,7 @@ function MapScreen({ navigation }) {
     handleLeft,
     setLeftLoading,
     setArrivedLoading,
+    handleInterval,
   } = useLocation();
 
   // TIMER
@@ -196,12 +198,13 @@ function MapScreen({ navigation }) {
 
   useEffect(() => {
     (async () => {
-      const tripRes = await selectTable("trip");
+      const tripRes = await selectTable("offline_trip");
       if (tripRes.length > 0) {
         const meter = getPathLength(points);
         const km = meter / 1000;
+        const odo = JSON.parse(tripRes[tripRes.length - 1].odometer);
 
-        setEstimatedOdo(parseFloat(km.toFixed(1)) + tripRes[0].odometer);
+        setEstimatedOdo(parseFloat(km.toFixed(1)) + parseFloat(odo));
       }
     })();
   }, [trip]);
@@ -235,6 +238,16 @@ function MapScreen({ navigation }) {
       setTotalKm(km.toFixed(1));
     })();
   }, [currentLocation]);
+
+  // 900000 = 15 minutes
+  useEffect(() => {
+    const loc = setInterval(() => {
+      handleLocInterval();
+    }, 900000);
+    return () => {
+      clearInterval(loc);
+    };
+  }, []);
 
   // ACTIVITY INDICATOR FOR SHOWING SUCCESS ANIMATION
   const handleSuccess = () => {
@@ -314,6 +327,27 @@ function MapScreen({ navigation }) {
   };
 
   // SQLITE HERE ////////////////////////////////////////
+
+  const handleLocInterval = async () => {
+    try {
+      const intervalRes = await handleInterval(trip._id);
+      const newObj = {
+        ...intervalRes,
+        date: Date.now(),
+      };
+
+      const tripRes = await selectTable("offline_trip");
+      let locPoint = JSON.parse(tripRes[tripRes.length - 1].locations);
+      locPoint.push(newObj);
+
+      await updateToTable(
+        `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
+        [JSON.stringify(locPoint)]
+      );
+    } catch (error) {
+      console.log("LOC INTERVAL: ", error);
+    }
+  };
 
   const sqliteLeft = async () => {
     try {
@@ -429,9 +463,13 @@ function MapScreen({ navigation }) {
     if (locPoint.length > 0) {
       setTrip({
         locations: [
-          ...locPoint.map((item) => {
-            return item;
-          }),
+          ...locPoint
+            .filter(
+              (item) => item.status === "left" || item.status === "arrived"
+            )
+            .map((filterItem) => {
+              return filterItem;
+            }),
         ],
       });
     }
@@ -503,73 +541,20 @@ function MapScreen({ navigation }) {
           </View>
         )}
         {currentLocation && locationPermission && !mapLoading ? (
-          // && trip?.locations.length > 0
           <>
             <View style={{ height: "50%" }}>
-              {!noInternet ? (
-                <MapView
-                  style={styles.map}
-                  moveOnMarkerPress={false}
-                  showsUserLocation
-                  showsMyLocationButton={false}
-                  initialRegion={currentLocation}
-                  onUserLocationChange={(event) => {
-                    userLocationChanged(event);
-                  }}
-                  ref={mapView}
-                  onPanDrag={() => setDrag(true)}
-                >
-                  <Polyline
-                    coordinates={points}
-                    strokeColor={colors.line}
-                    strokeWidth={3}
-                  />
-                  {trip?.locations.map((item, i) => {
-                    const markerTitle = i + 1;
-                    return (
-                      <Marker
-                        key={i}
-                        coordinate={{
-                          latitude: item.lat,
-                          longitude: item.long,
-                        }}
-                        pinColor={
-                          item.status === "left"
-                            ? colors.danger
-                            : colors.success
-                        }
-                        title={markerTitle.toString()}
-                      ></Marker>
-                    );
-                  })}
-                  {gas &&
-                    gas.map((gasItem, i) => {
-                      const gasTitle = i + 1;
-                      return (
-                        <Marker
-                          key={i}
-                          coordinate={{
-                            latitude: gasItem.lat,
-                            longitude: gasItem.long,
-                          }}
-                          pinColor={colors.primary}
-                          title={gasTitle.toString()}
-                        ></Marker>
-                      );
-                    })}
-                  {/* CAR IMAGE HERE */}
-                </MapView>
-              ) : (
-                <DrivingIndicator visible={true} />
-              )}
-              {drag && !noInternet && (
-                <View style={styles.dragWrapper}>
-                  <Button
-                    title="Track Location"
-                    onPress={() => setDrag(false)}
-                  />
-                </View>
-              )}
+              {/* <DrivingIndicator visible={true} /> */}
+              <View
+                style={{
+                  justifyContent: "center",
+                  alignItems: "center",
+                  height: "100%",
+                }}
+              >
+                <AppText style={{ color: colors.danger }}>
+                  M E T R O {"  "} G P S
+                </AppText>
+              </View>
             </View>
             <View
               style={{
@@ -597,9 +582,7 @@ function MapScreen({ navigation }) {
                       ? "light"
                       : trip === undefined
                       ? "light"
-                      : // : noInternet
-                        // ? "light"
-                        "danger"
+                      : "danger"
                   }
                   onPress={sqliteLeft}
                   isLoading={leftLoading}
@@ -608,7 +591,6 @@ function MapScreen({ navigation }) {
                     arrivedLoading ||
                     (trip?.locations.length % 2 !== 0 &&
                       trip?.locations.length > 0) ||
-                    // noInternet ||
                     trip === undefined
                   }
                 />
@@ -624,9 +606,7 @@ function MapScreen({ navigation }) {
                       ? "light"
                       : trip === undefined
                       ? "light"
-                      : // : noInternet
-                        // ? "light"
-                        "success"
+                      : "success"
                   }
                   onPress={sqliteArrived}
                   isLoading={arrivedLoading}
@@ -635,7 +615,6 @@ function MapScreen({ navigation }) {
                     leftLoading ||
                     (trip?.locations.length % 2 === 0 &&
                       trip?.locations.length > 0) ||
-                    // noInternet ||
                     trip === undefined
                   }
                 />
@@ -650,19 +629,12 @@ function MapScreen({ navigation }) {
                       backgroundColor:
                         arrivedLoading || leftLoading
                           ? colors.light
-                          : // : noInternet
-                          // ? colors.light
-                          trip === undefined
+                          : trip === undefined
                           ? colors.light
                           : colors.primary,
                     },
                   ]}
-                  disabled={
-                    arrivedLoading ||
-                    leftLoading ||
-                    // noInternet ||
-                    trip === undefined
-                  }
+                  disabled={arrivedLoading || leftLoading || trip === undefined}
                 >
                   <MaterialCommunityIcons
                     name="gas-station"
@@ -682,9 +654,7 @@ function MapScreen({ navigation }) {
                     ? "light"
                     : trip?.locations.length === 0 && trip?.locations.length > 0
                     ? "light"
-                    : // : noInternet
-                    // ? "light"
-                    leftLoading
+                    : leftLoading
                     ? "light"
                     : arrivedLoading
                     ? "light"
@@ -698,8 +668,6 @@ function MapScreen({ navigation }) {
                     trip?.locations.length > 0) ||
                   arrivedLoading ||
                   leftLoading
-                  // ||
-                  // noInternet
                 }
               />
             </View>
@@ -708,7 +676,6 @@ function MapScreen({ navigation }) {
           <ActivityIndicator visible={true} />
           // <AppText>Loading</AppText>
         )}
-
         <View style={[styles.success, { display: showSuccess }]}>
           <SuccessIndicator visible={showSuccess === "flex" ? true : false} />
         </View>

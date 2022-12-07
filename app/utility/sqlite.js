@@ -37,14 +37,25 @@ export const dropTable = async (query) => {
 };
 
 export const deleteFromTable = async (query) => {
-  db.transaction((tx) => {
-    tx.executeSql(
-      `DELETE FROM ${query}`,
-      (transact, resultset) => console.log(resultset),
-      (transact, err) => console.log(err)
-    );
+  return new Promise((resolve, reject) => {
+    db.transaction((tx) => {
+      tx.executeSql(`DELETE FROM ${query}`, [], (_, { rows }) => {
+        resolve(rows._array);
+      }),
+        (transact, err) => reject(err);
+    });
   });
 };
+
+// export const deleteFromTable = async (query) => {
+//   db.transaction((tx) => {
+//     tx.executeSql(
+//       `DELETE FROM ${query}`,
+//       (transact, resultset) => console.log(resultset),
+//       (transact, err) => console.log(err)
+//     );
+//   });
+// };
 
 export const insertToTable = async (query, values) => {
   return new Promise((resolve, reject) => {

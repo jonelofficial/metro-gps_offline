@@ -25,7 +25,6 @@ import routes from "../navigation/routes";
 import useAuth from "../auth/useAuth";
 import SyncingIndicator from "../components/indicator/SyncingIndicator";
 import AuthContext from "../auth/context";
-// import { ADMIN_TOKEN } from "@env";
 import { getVehicles } from "../api/VehicleApi";
 import {
   createTable,
@@ -39,7 +38,8 @@ function LoginScreen({ navigation }) {
   const [loading, setLoading] = useState();
   const [showPassword, setShowPassword] = useState(false);
   const { logIn } = useAuth();
-  const { setOfflineVehicles, setOfflineGasStations } = useContext(AuthContext);
+  const { setOfflineVehicles, setOfflineGasStations, noInternet } =
+    useContext(AuthContext);
   useEffect(() => {
     (async () => {
       await createTable(
@@ -69,101 +69,123 @@ function LoginScreen({ navigation }) {
       Keyboard.dismiss();
       setLoading(true);
 
-      const data = await useLogin(user);
-      if (data?.message) {
-        setLoading(false);
-        return alert(`${data.message}`);
-      }
+      if (!noInternet) {
+        const data = await useLogin(user);
 
-      // const vehicles = await getVehicles(process.env.ADMIN_TOKEN);
-      const vehicles = await getVehicles();
-
-      if (vehicles.data) {
-        // Handle store and update vehicles master list to local storage
-        try {
-          let vehicleCount;
-          vehicleCount = vehicles.data.length;
-          const data = await selectTable("vehicles");
-          if (data.length === 0) {
-            await vehicles.data.map(async (item) => {
-              await insertToTable(
-                "INSERT INTO vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
-                [
-                  item._id,
-                  item.plate_no,
-                  item.vehicle_type,
-                  item.name,
-                  item.brand,
-                  item.fuel_type,
-                  item.km_per_liter,
-                ]
-              );
-            });
-          } else if (vehicleCount !== data.length) {
-            await deleteFromTable("vehicles");
-            await vehicles.data.map(async (item) => {
-              await insertToTable(
-                "INSERT INTO vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
-                [
-                  item._id,
-                  item.plate_no,
-                  item.vehicle_type,
-                  item.name,
-                  item.brand,
-                  item.fuel_type,
-                  item.km_per_liter,
-                ]
-              );
-            });
-          }
-        } catch (error) {
-          console.log("SQLITE VEHICLES ERROR: ", error);
+        if (data?.message) {
+          setLoading(false);
+          return alert(`${data.message}`);
         }
-        // End
-      }
 
-      // const gasStation = await getGasStation(process.env.ADMIN_TOKEN);
-      const gasStation = await getGasStation();
+        // UPDATE USER FROM SQLITE
+        await deleteFromTable("user");
+        await insertToTable(
+          "INSERT INTO user (username, password, token) values (?,?,?)",
+          [user.username, user.password, data.token]
+        );
 
-      if (gasStation.data) {
-        // Handle store and update gas station master list to local storage
-        try {
-          let stationCount;
-          stationCount = gasStation.data.length;
-          const data = await selectTable("gas_station");
-          if (data.length === 0) {
-            await gasStation.data.map(async (item) => {
-              await insertToTable(
-                "INSERT INTO gas_station (_id, label) values (?,?)",
-                [item._id, item.label]
-              );
-            });
-          } else if (stationCount !== data.length) {
-            await deleteFromTable("gas_station");
-            await gasStation.data.map(async (item) => {
-              await insertToTable(
-                "INSERT INTO gas_station (_id,label) values (?,?)",
-                [item._id, item.label]
-              );
-            });
+        const vehicles = await getVehicles();
+
+        if (vehicles.data) {
+          // Handle store and update vehicles master list to local storage
+          try {
+            let vehicleCount;
+            vehicleCount = vehicles.data.length;
+            const data = await selectTable("vehicles");
+            if (data.length === 0) {
+              await vehicles.data.map(async (item) => {
+                await insertToTable(
+                  "INSERT INTO vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
+                  [
+                    item._id,
+                    item.plate_no,
+                    item.vehicle_type,
+                    item.name,
+                    item.brand,
+                    item.fuel_type,
+                    item.km_per_liter,
+                  ]
+                );
+              });
+            } else if (vehicleCount !== data.length) {
+              await deleteFromTable("vehicles");
+              await vehicles.data.map(async (item) => {
+                await insertToTable(
+                  "INSERT INTO vehicles (_id, plate_no, vehicle_type, name,brand, fuel_type, km_per_liter) values (?,?,?,?,?,?,?)",
+                  [
+                    item._id,
+                    item.plate_no,
+                    item.vehicle_type,
+                    item.name,
+                    item.brand,
+                    item.fuel_type,
+                    item.km_per_liter,
+                  ]
+                );
+              });
+            }
+          } catch (error) {
+            console.log("SQLITE VEHICLES ERROR: ", error);
           }
-        } catch (error) {
-          console.log("SQLITE GAS STATION ERROR: ", error);
+          // End
         }
-        // End
+
+        const gasStation = await getGasStation();
+
+        if (gasStation.data) {
+          // Handle store and update gas station master list to local storage
+          try {
+            let stationCount;
+            stationCount = gasStation.data.length;
+            const data = await selectTable("gas_station");
+            if (data.length === 0) {
+              await gasStation.data.map(async (item) => {
+                await insertToTable(
+                  "INSERT INTO gas_station (_id, label) values (?,?)",
+                  [item._id, item.label]
+                );
+              });
+            } else if (stationCount !== data.length) {
+              await deleteFromTable("gas_station");
+              await gasStation.data.map(async (item) => {
+                await insertToTable(
+                  "INSERT INTO gas_station (_id,label) values (?,?)",
+                  [item._id, item.label]
+                );
+              });
+            }
+          } catch (error) {
+            console.log("SQLITE GAS STATION ERROR: ", error);
+          }
+          // End
+        }
+
+        logIn(data);
+        authStorage.storeToken(data);
+        reset();
+      } else {
+        const offlineData = await selectTable("user");
+        offlineData.map((item) => {
+          if (
+            (item.password === user.password) &
+            (item.username === user.username)
+          ) {
+            logIn(item);
+            authStorage.storeToken(item);
+            reset();
+          } else {
+            alert(
+              `Could not find user. Login with internet connection instead`
+            );
+            setLoading(false);
+          }
+        });
       }
-
-      logIn(data);
-      authStorage.storeToken(data);
-      reset();
-
-      // setLoading(false);
     } catch (error) {
       console.log("LOGIN SCREEN ERROR:", error);
       setLoading(false);
     }
   };
-  // if (loading) return <SyncingIndicator visible={true} />;
 
   return (
     <Screen style={styles.screen}>

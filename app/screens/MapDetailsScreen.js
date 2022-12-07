@@ -3,14 +3,12 @@ import MapView, { Marker, Polyline } from "react-native-maps";
 import { StyleSheet, View, Button } from "react-native";
 import dayjs from "dayjs";
 
-import { getGasStation } from "../api/GasStationApi";
 import AppText from "../components/AppText";
 import AppButton from "../components/AppButton";
 import AuthContext from "../auth/context";
 import colors from "../config/colors";
 import Screen from "../components/Screen";
 import routes from "../navigation/routes";
-import { getPathLength } from "geolib";
 
 function MapDetailsScreen({ route, navigation }) {
   const [loading, setLoading] = useState(true);
@@ -20,17 +18,26 @@ function MapDetailsScreen({ route, navigation }) {
   const [points, setPoints] = useState();
   const [drag, setDrag] = useState(false);
 
+  const [pinLocation, setPinLocation] = useState([]);
+
   const map = useRef();
 
-  const { token, user, offlineGasStations } = useContext(AuthContext);
+  const { user, offlineGasStations, noInternet } = useContext(AuthContext);
   const { item } = route.params;
 
-  const latlong = item.locations;
+  const pin = () => {
+    item.locations
+      .filter((item) => item.status === "left" || item.status === "arrived")
+      .map((filterItem) =>
+        setPinLocation((prevState) => [...prevState, filterItem])
+      );
+  };
 
   useEffect(() => {
     fetchGasStation();
     setPoints(item.points);
-    // console.log(item.trip_date);
+    pin();
+    // console.log(item.diesels);
   }, []);
 
   const handleResumeTrip = async () => {
@@ -41,13 +48,6 @@ function MapDetailsScreen({ route, navigation }) {
 
   const fetchGasStation = async () => {
     try {
-      // setGasStation([]);
-      // const gasRes = await getGasStation(token);
-      // setGasStation(
-      //   gasRes.data.map((item) => {
-      //     return { label: item.label, value: item._id };
-      //   })
-      // );
       setGasStation([]);
 
       setGasStation(
@@ -67,7 +67,7 @@ function MapDetailsScreen({ route, navigation }) {
 
   const fitMap = () => {
     map.current.fitToCoordinates(
-      latlong.map((item) => {
+      pinLocation.map((item) => {
         return {
           latitude: item.lat,
           longitude: item.long,
@@ -86,61 +86,76 @@ function MapDetailsScreen({ route, navigation }) {
   return (
     <Screen>
       <View style={{ height: "50%" }}>
-        <MapView
-          ref={map}
-          style={styles.map}
-          loadingEnabled={loading}
-          loadingIndicatorColor={colors.primary}
-          onMapReady={handleMapReady}
-          onPanDrag={() => setDrag(true)}
-        >
-          {points && (
-            <Polyline
-              coordinates={points}
-              strokeColor={colors.line}
-              strokeWidth={3}
-            />
-          )}
+        {!noInternet ? (
+          <MapView
+            ref={map}
+            style={styles.map}
+            loadingEnabled={loading}
+            loadingIndicatorColor={colors.primary}
+            onMapReady={handleMapReady}
+            onPanDrag={() => setDrag(true)}
+          >
+            {points && (
+              <Polyline
+                coordinates={points}
+                strokeColor={colors.line}
+                strokeWidth={3}
+              />
+            )}
 
-          {latlong.map((item, i) => {
-            const markerID = i + 1;
-            return (
-              <Marker
-                key={i}
-                coordinate={{
-                  latitude: item.lat,
-                  longitude: item.long,
-                }}
-                pinColor={
-                  item.status === "left" ? colors.danger : colors.success
-                }
-                onPress={() => {
-                  setGasData(null);
-                  setMarkerData({ ...item, index: i });
-                }}
-                title={markerID.toString()}
-              ></Marker>
-            );
-          })}
-
-          {item.diesels.length >= 1 &&
-            item.diesels.map((gasItem, i) => {
+            {pinLocation.map((item, i) => {
+              const markerID = i + 1;
               return (
                 <Marker
                   key={i}
                   coordinate={{
-                    latitude: gasItem.lat,
-                    longitude: gasItem.long,
+                    latitude: item.lat,
+                    longitude: item.long,
                   }}
-                  pinColor={colors.primary}
+                  pinColor={
+                    item.status === "left" ? colors.danger : colors.success
+                  }
                   onPress={() => {
-                    setMarkerData(null);
-                    setGasData(gasItem);
+                    setGasData(null);
+                    setMarkerData({ ...item, index: i });
                   }}
+                  title={markerID.toString()}
                 ></Marker>
               );
             })}
-        </MapView>
+
+            {item.diesels.length >= 1 &&
+              item.diesels.map((gasItem, i) => {
+                return (
+                  <Marker
+                    key={i}
+                    coordinate={{
+                      latitude: gasItem.lat,
+                      longitude: gasItem.long,
+                    }}
+                    pinColor={colors.primary}
+                    onPress={() => {
+                      setMarkerData(null);
+                      setGasData(gasItem);
+                    }}
+                  ></Marker>
+                );
+              })}
+          </MapView>
+        ) : (
+          <View
+            style={{
+              justifyContent: "center",
+              alignItems: "center",
+              height: "100%",
+            }}
+          >
+            <AppText style={{ color: colors.danger }}>
+              Connect to internet to show map
+            </AppText>
+          </View>
+        )}
+
         {drag && (
           <View
             style={{
@@ -175,7 +190,7 @@ function MapDetailsScreen({ route, navigation }) {
           /* Checking if the `odometer_done` attribute is unsave. */
           (item?.odometer_done < 0 ||
             item?.odometer_done === null ||
-            item?.locations.length % 2 !== 0) && (
+            pinLocation.length % 2 !== 0) && (
             <View style={styles.unFinishTransac}>
               <AppText
                 style={{
@@ -206,7 +221,7 @@ function MapDetailsScreen({ route, navigation }) {
             <View style={styles.leftWrapper}>
               <AppText style={styles.legendText}>LEFT</AppText>
             </View>
-            {latlong.length > 1 && (
+            {pinLocation.length > 1 && (
               <View style={styles.arrivedWrapper}>
                 <AppText style={styles.legendText}>ARRIVED</AppText>
               </View>
@@ -260,7 +275,7 @@ function MapDetailsScreen({ route, navigation }) {
                   {dayjs(item.trip_date).format("YYYY-MM-DD | hh:mm A")}
                 </AppText>
                 {user.trip_template === "hauling" ? undefined : (
-                  <AppText>Total Location: {latlong.length}</AppText>
+                  <AppText>Total Location: {pinLocation?.length}</AppText>
                 )}
                 <AppText>Total Gas: {item.diesels.length}</AppText>
                 <AppText>Odometer Out: {item.odometer}</AppText>
@@ -269,6 +284,7 @@ function MapDetailsScreen({ route, navigation }) {
                 {item.companion.map((com, i) => {
                   return <AppText key={i}>{com.firstName}</AppText>;
                 })}
+                <AppText>Others: {item.others}</AppText>
               </>
             ) : !gasData ? (
               <>
@@ -343,7 +359,7 @@ function MapDetailsScreen({ route, navigation }) {
           </View>
           {(item?.odometer_done < 0 ||
             item?.odometer_done === null ||
-            item?.locations.length % 2 !== 0) && (
+            pinLocation.length % 2 !== 0) && (
             <View style={{ margin: 10 }}>
               <AppButton
                 title="RESUME"

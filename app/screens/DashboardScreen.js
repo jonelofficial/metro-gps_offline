@@ -125,6 +125,8 @@ function DashboardScreen({ navigation }) {
           },
         });
 
+        // const res = await selectTable("offline_trip");
+        // console.log(JSON.parse(res[0].locations));
         // console.log(await selectTable("offline_trip"));
 
         // await deleteFromTable("offline_trip");
@@ -190,11 +192,11 @@ function DashboardScreen({ navigation }) {
 
       if (res.length >= 0) {
         setOffline(true);
-        await res.reverse().map((item, index) => {
+        await res.reverse().map((item) => {
           setTrips((prevState) => [
             ...prevState,
             {
-              _id: res.length - index,
+              _id: item.id,
               vehicle_id: item.vehicle_id,
               companion: JSON.parse(item.companion),
               diesels: JSON.parse(item.gas),

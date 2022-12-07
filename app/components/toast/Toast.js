@@ -87,9 +87,9 @@ function Toast({ scanned, showToast, data, setScanned, userData, noInternet }) {
             title={
               data.targetScreen === null && data.description === null
                 ? "NO VEHICLE FOUND"
-                : noInternet
-                ? "NO INTERNET"
-                : scanned && data.targetScreen === null
+                : // : noInternet
+                // ? "NO INTERNET"
+                scanned && data.targetScreen === null
                 ? "SIGN IN"
                 : scanned
                 ? "DRIVE"
@@ -104,9 +104,9 @@ function Toast({ scanned, showToast, data, setScanned, userData, noInternet }) {
             color={
               data.targetScreen === null && data.description === null
                 ? "disablePrimary"
-                : noInternet
-                ? "disablePrimary"
-                : scanned
+                : // : noInternet
+                // ? "disablePrimary"
+                scanned
                 ? "primary"
                 : "disablePrimary"
             }

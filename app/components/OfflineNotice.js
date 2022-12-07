@@ -11,7 +11,7 @@ function OfflineNotice(props) {
   if (noInternet)
     return (
       <View style={styles.container}>
-        <ActivityIndicator color={colors.white} size="small" />
+        {/* <ActivityIndicator color={colors.white} size="small" /> */}
         <AppText style={styles.text}>No Internet Connection</AppText>
       </View>
     );
