@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { memo, useContext, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -124,10 +124,6 @@ function DashboardScreen({ navigation }) {
             };
           },
         });
-
-        // const res = await selectTable("offline_trip");
-        // console.log(JSON.parse(res[0].locations));
-        // console.log(await selectTable("offline_trip"));
 
         // await deleteFromTable("offline_trip");
         await deleteFromTable("route");
@@ -278,23 +274,12 @@ function DashboardScreen({ navigation }) {
     return <ActivityIndicator size="large" color={colors.primary} />;
   };
 
-  const FooterNoData = () => {
-    return (
-      <AppText
-        style={{
-          textAlign: "center",
-        }}
-      >
-        No data to show
-      </AppText>
-    );
-  };
-
   // Render Item
 
-  const renderItem = ({ item }) => {
+  const renderItem = ({ item, index }) => {
     return (
       <ListItem
+        key={index}
         setOffScan={setOffScan}
         offScan={offScan}
         setOffline={setOffline}
@@ -405,7 +390,7 @@ function DashboardScreen({ navigation }) {
             <FlatList
               onScroll={onScroll}
               data={trips}
-              keyExtractor={(initialData) => initialData._id.toString()}
+              // keyExtractor={(initialData,index) => initialData._id.toString()}
               renderItem={renderItem}
               ItemSeparatorComponent={ListItemSeperator}
               refreshing={false}
@@ -413,9 +398,15 @@ function DashboardScreen({ navigation }) {
               ListFooterComponent={
                 endLoading && !noData ? (
                   <Footer />
-                ) : !endLoading && noData ? (
-                  <FooterNoData />
-                ) : null
+                ) : (
+                  <AppText
+                    style={{
+                      textAlign: "center",
+                    }}
+                  >
+                    {!endLoading && noData && "No data to show"}
+                  </AppText>
+                )
               }
               onEndReached={onEndReached}
               onEndReachedThreshold={0.0001}

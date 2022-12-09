@@ -159,6 +159,12 @@ function MapScreen({ navigation }) {
       if (tripRes.length >= 0) {
         const pointObj = JSON.parse(tripRes[tripRes.length - 1].points);
         pointObj.map(async (item) => {
+          if (
+            pointObj[0].latitude.toFixed(4) == item.latitude.toFixed(4) ||
+            pointObj[0].longitude.toFixed(4) == item.longitude.toFixed(4)
+          ) {
+            return null;
+          }
           await insertToTable("INSERT INTO route (points) values (?)", [
             JSON.stringify(item),
           ]);

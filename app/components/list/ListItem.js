@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { memo, useEffect } from "react";
 import {
   StyleSheet,
   View,
@@ -62,6 +62,8 @@ function ListItem({
         const date2 = dayjs(location.date);
         const minutes = Math.abs(date1.diff(date2, "minutes"));
         const hours = Math.abs(date1.diff(date2, "h"));
+        // const minutes = date1.diff(date2, "minutes");
+        // const hours = date1.diff(date2, "h");
         newMinutes = newMinutes + minutes;
         newHours = newHours + hours;
       }
@@ -73,8 +75,15 @@ function ListItem({
   const km = meter / 1000;
 
   //  Getting TIME
-  const finalHours = newHours * 60;
-  const minute = newMinutes - finalHours;
+  // const finalHours = newHours * 60;
+  // const minute = newMinutes - finalHours;
+
+  const hr = newMinutes / 60;
+  const hrs = hr.toFixed(0) * 60;
+  const min = newMinutes - hrs;
+
+  newHours = hr.toFixed(0);
+  const minute = min;
 
   const hour = `${newHours}.${minute == 0 ? "00" : minute}`;
 
@@ -344,4 +353,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ListItem;
+export default memo(ListItem);

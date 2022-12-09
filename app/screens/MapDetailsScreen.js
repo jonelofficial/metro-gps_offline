@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from "react";
+import React, { memo, useContext, useEffect, useRef, useState } from "react";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { StyleSheet, View, Button } from "react-native";
 import dayjs from "dayjs";
@@ -28,16 +28,16 @@ function MapDetailsScreen({ route, navigation }) {
   const pin = () => {
     item.locations
       .filter((item) => item.status === "left" || item.status === "arrived")
-      .map((filterItem) =>
-        setPinLocation((prevState) => [...prevState, filterItem])
-      );
+      .map((filterItem) => {
+        setPinLocation((prevState) => [...prevState, filterItem]);
+      });
   };
 
   useEffect(() => {
     fetchGasStation();
     setPoints(item.points);
     pin();
-    // console.log(item.diesels);
+    // console.log("P I N  L O C A T I O N : ", pinLocation);
   }, []);
 
   const handleResumeTrip = async () => {
@@ -284,7 +284,9 @@ function MapDetailsScreen({ route, navigation }) {
                 {item.companion.map((com, i) => {
                   return <AppText key={i}>{com.firstName}</AppText>;
                 })}
-                <AppText>Others: {item.others}</AppText>
+                <AppText>
+                  Others: {item.others == "null" ? "" : item.others}
+                </AppText>
               </>
             ) : !gasData ? (
               <>
@@ -431,4 +433,4 @@ const styles = StyleSheet.create({
     bottom: 0,
   },
 });
-export default MapDetailsScreen;
+export default memo(MapDetailsScreen);
