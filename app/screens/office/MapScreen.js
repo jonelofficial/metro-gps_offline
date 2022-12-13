@@ -33,12 +33,16 @@ import routes from "../../navigation/routes";
 import GasModal from "../../components/modals/GasModal";
 import DoneModal from "../../components/modals/DoneModal";
 import {
+  deleteFromTable,
   insertToTable,
   selectTable,
   updateToTable,
 } from "../../utility/sqlite";
 import { getPathLength } from "geolib";
 import ActivityIndicator from "../../components/indicator/ActivityIndicator";
+import { createTrip, deleteTrip } from "../../api/office/TripApi";
+import { createBulkLocation } from "../../api/office/LocationsApi";
+import { gasCarBulk } from "../../api/office/DieselApi";
 
 function MapScreen({ navigation }) {
   const [trip, setTrip] = useState({ locations: [] });
@@ -74,6 +78,7 @@ function MapScreen({ navigation }) {
     setOffScan,
     setUnfinishTrip,
     offlineGasStations,
+    token,
   } = useContext(AuthContext);
 
   // GPS
@@ -347,7 +352,8 @@ function MapScreen({ navigation }) {
       locPoint.push(newObj);
 
       await updateToTable(
-        `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
+        // `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
+        "UPDATE offline_trip SET locations = (?) WHERE id = (SELECT MAX(id) FROM offline_trip)",
         [JSON.stringify(locPoint)]
       );
     } catch (error) {
@@ -371,7 +377,8 @@ function MapScreen({ navigation }) {
       locPoint.push(newObj);
 
       await updateToTable(
-        `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
+        // `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
+        "UPDATE offline_trip SET locations = (?) WHERE id = (SELECT MAX(id) FROM offline_trip)",
         [JSON.stringify(locPoint)]
       );
 
@@ -403,7 +410,8 @@ function MapScreen({ navigation }) {
       locPoint.push(newObj);
 
       await updateToTable(
-        `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
+        // `UPDATE offline_trip SET locations = (?) WHERE id = ${tripRes.length}`,
+        "UPDATE offline_trip SET locations = (?) WHERE id = (SELECT MAX(id) FROM offline_trip)",
         [JSON.stringify(locPoint)]
       );
 
@@ -440,7 +448,8 @@ function MapScreen({ navigation }) {
       gas.push(gasObj);
 
       await updateToTable(
-        `UPDATE offline_trip SET gas = (?) WHERE id = ${tripRes.length}`,
+        // `UPDATE offline_trip SET gas = (?) WHERE id = ${tripRes.length}`,
+        "UPDATE offline_trip SET gas = (?)WHERE id = (SELECT MAX(id) FROM offline_trip)",
         [JSON.stringify(gas)]
       );
 
@@ -508,7 +517,6 @@ function MapScreen({ navigation }) {
     try {
       Keyboard.dismiss();
       setDoneLoading(true);
-
       let mapPoints = [];
       const routeRes = await selectTable("route");
 
@@ -519,9 +527,56 @@ function MapScreen({ navigation }) {
       const tripRes = await selectTable("offline_trip");
 
       await updateToTable(
-        `UPDATE offline_trip SET odometer_done = (?), points = (?)  WHERE id = ${tripRes.length}`,
+        // `UPDATE offline_trip SET odometer_done = (?), points = (?)  WHERE id = ${tripRes.length}`,
+        "UPDATE offline_trip SET odometer_done = (?), points = (?)  WHERE id = (SELECT MAX(id) FROM offline_trip)",
         [JSON.stringify(vehicle_data.odometer_done), JSON.stringify(mapPoints)]
       );
+
+      if (!noInternet) {
+        const offlineTrip = await selectTable(
+          "offline_trip WHERE id = (SELECT MAX(id) FROM offline_trip)"
+        );
+
+        const img = JSON.parse(offlineTrip[0].image);
+        const form = new FormData();
+        form.append("vehicle_id", offlineTrip[0].vehicle_id);
+        form.append("odometer", JSON.parse(offlineTrip[0].odometer));
+        form.append("odometer_done", JSON.parse(vehicle_data.odometer_done));
+        img?.uri !== null && form.append("image", img);
+        form.append("companion", offlineTrip[0].companion);
+        form.append("points", JSON.stringify(mapPoints));
+        form.append("others", offlineTrip[0].others);
+        form.append("trip_date", JSON.parse(offlineTrip[0].date));
+
+        const tripRes = await createTrip(form, token);
+        if (tripRes?.data._id) {
+          const locations = await createBulkLocation(
+            JSON.parse(offlineTrip[0].locations),
+            tripRes.data._id,
+            token
+          );
+          // console.log(locations);
+          const diesels = await gasCarBulk(
+            JSON.parse(offlineTrip[0].gas),
+            tripRes.data._id,
+            token
+          );
+          // console.log(diesels);
+
+          if ((locations.tally === true) & (diesels.tally === true)) {
+            await deleteFromTable(
+              `offline_trip WHERE id = (SELECT MAX(id) FROM offline_trip)`
+            );
+          } else {
+            await deleteTrip(tripRes.data._id, token);
+            alert(
+              `Syncing ${
+                !locations.tally ? "locations" : "diesels"
+              } not match. Please try again`
+            );
+          }
+        }
+      }
 
       doneReset();
       setDoneLoading(false);
