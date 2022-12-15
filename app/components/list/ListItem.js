@@ -18,6 +18,7 @@ import { createTrip, deleteTrip } from "../../api/office/TripApi";
 import { createBulkLocation } from "../../api/office/LocationsApi";
 import { gasCarBulk } from "../../api/office/DieselApi";
 import { deleteFromTable, selectTable } from "../../utility/sqlite";
+import moment from "moment-timezone";
 
 function ListItem({
   onPress,
@@ -87,7 +88,8 @@ function ListItem({
 
   const hour = `${newHours}.${minute == 0 ? "00" : minute}`;
 
-  const name = dayjs(item.trip_date).format("h:mm A");
+  // const name = dayjs(item.trip_date).format("h:mm A");
+  const name = moment(item.trip_date).tz("Asia/Manila").format("h:mm a");
 
   const date = dayjs(item.trip_date).format("MM-DD-YY");
 
@@ -262,13 +264,12 @@ function ListItem({
               style={[
                 styles.name,
                 {
-                  // color:
-                  //   (item.odometer_done < 0 ||
-                  //     newLocations.length % 2 !== 0 ||
-                  //     item.odometer_done == null ||
-                  //     item?.offline === true) &&
-                  //   colors.light4,
-                  color: "red",
+                  color:
+                    (item.odometer_done < 0 ||
+                      newLocations.length % 2 !== 0 ||
+                      item.odometer_done == null ||
+                      item?.offline === true) &&
+                    colors.light4,
                 },
               ]}
             >

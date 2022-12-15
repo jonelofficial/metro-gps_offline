@@ -43,6 +43,7 @@ import ActivityIndicator from "../../components/indicator/ActivityIndicator";
 import { createTrip, deleteTrip } from "../../api/office/TripApi";
 import { createBulkLocation } from "../../api/office/LocationsApi";
 import { gasCarBulk } from "../../api/office/DieselApi";
+import moment from "moment-timezone";
 
 function MapScreen({ navigation }) {
   const [trip, setTrip] = useState({ locations: [] });
@@ -343,7 +344,7 @@ function MapScreen({ navigation }) {
       const intervalRes = await handleInterval(trip._id);
       const newObj = {
         ...intervalRes,
-        date: Date.now(),
+        date: moment(Date.now()).tz("Asia/Manila"),
       };
 
       const tripRes = await selectTable("offline_trip");
@@ -368,7 +369,7 @@ function MapScreen({ navigation }) {
       const leftRes = await handleLeft(trip._id);
       const newObj = {
         ...leftRes,
-        date: Date.now(),
+        date: moment(Date.now()).tz("Asia/Manila"),
       };
 
       const tripRes = await selectTable("offline_trip");
@@ -401,7 +402,7 @@ function MapScreen({ navigation }) {
       const arrivedRes = await handleArrived(trip._id);
       const newObj = {
         ...arrivedRes,
-        date: Date.now(),
+        date: moment(Date.now()).tz("Asia/Manila"),
       };
 
       const tripRes = await selectTable("offline_trip");

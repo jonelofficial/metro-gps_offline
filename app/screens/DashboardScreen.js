@@ -31,9 +31,6 @@ import * as Notifications from "expo-notifications";
 
 import routes from "../navigation/routes";
 import { deleteFromTable, selectTable } from "../utility/sqlite";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
 
 function DashboardScreen({ navigation }) {
   const [text, setText] = useState();
@@ -61,17 +58,6 @@ function DashboardScreen({ navigation }) {
     offScan,
     noInternet,
   } = useContext(AuthContext);
-
-  useEffect(() => {
-    dayjs.extend(utc);
-    dayjs.extend(timezone);
-
-    console.log(dayjs.tz("2014-06-01 12:00", "Asia/Tokyo"));
-
-    console.log("Europe: ", dayjs().tz("Europe/Paris").format("h:mm A"));
-    console.log("Taipei: ", dayjs().tz("Asia/Singapore").format("h:mm A"));
-    console.log("Local: ", dayjs(Date.now()).format("h:mm A"));
-  }, []);
 
   // Scroll
   const [prevScrollPos, setPrevScrollPos] = useState(0);

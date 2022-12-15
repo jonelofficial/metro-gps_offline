@@ -28,6 +28,7 @@ import Spacer from "../../components/Spacer";
 import routes from "../../navigation/routes";
 import Scanner from "../../components/Scanner";
 import { insertToTable, selectTable } from "../../utility/sqlite";
+import moment from "moment-timezone";
 
 function TranspoDetailsScreen({ navigation, route }) {
   const [loading, setLoading] = useState(true);
@@ -152,7 +153,8 @@ function TranspoDetailsScreen({ navigation, route }) {
           data.others,
           JSON.stringify([]),
           JSON.stringify([]),
-          JSON.stringify(Date.now()),
+          // JSON.stringify(Date.now()),
+          JSON.stringify(moment(Date.now()).tz("Asia/Manila")),
           -1,
         ]
       );
