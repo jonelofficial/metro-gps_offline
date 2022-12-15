@@ -88,6 +88,7 @@ function ListItem({
   const hour = `${newHours}.${minute == 0 ? "00" : minute}`;
 
   const name = dayjs(item.trip_date).format("h:mm A");
+
   const date = dayjs(item.trip_date).format("MM-DD-YY");
 
   const handleSync = async () => {
@@ -261,12 +262,13 @@ function ListItem({
               style={[
                 styles.name,
                 {
-                  color:
-                    (item.odometer_done < 0 ||
-                      newLocations.length % 2 !== 0 ||
-                      item.odometer_done == null ||
-                      item?.offline === true) &&
-                    colors.light4,
+                  // color:
+                  //   (item.odometer_done < 0 ||
+                  //     newLocations.length % 2 !== 0 ||
+                  //     item.odometer_done == null ||
+                  //     item?.offline === true) &&
+                  //   colors.light4,
+                  color: "red",
                 },
               ]}
             >

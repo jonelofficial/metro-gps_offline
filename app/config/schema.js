@@ -44,7 +44,8 @@ export const mapGasSchema = Yup.object().shape({
 // MAP SCREEN
 export const mapDoneSchema = Yup.object().shape({
   odometer_done: Yup.string()
-    .matches(/^\d*\.?(?:\d{1,9})?$/, "Must be only digits")
+    // .matches(/^\d*\.?(?:\d{1,9})?$/, "Must be only digits")
+    .matches(/^[0-9]*\.?[0-9]*$/, "Must be only digits with one decimal point")
     .required()
     .label("Odometer"),
 });

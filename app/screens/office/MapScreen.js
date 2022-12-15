@@ -50,12 +50,13 @@ function MapScreen({ navigation }) {
   const [gasLoading, setGasLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState("none");
   const [totalKm, setTotalKm] = useState();
+  const [haveRoute, setHaveRoute] = useState(false);
 
   // MAP
   const [points, setPoints] = useState([]);
   const [gas, setGas] = useState([]);
   const [drag, setDrag] = useState(false);
-  const [mapLoading, setMapLoading] = useState(false);
+  const [mapLoading, setMapLoading] = useState(true);
 
   // APPFORM PICKER
   const [value, setValue] = useState(null);
@@ -129,7 +130,7 @@ function MapScreen({ navigation }) {
           ? () => BackHandler.exitApp()
           : async () => {
               if (trip?.locations.length % 2 !== 0 && !mapLoading) {
-                return sqliteArrived();
+                sqliteArrived();
               } else if (trip?.locations.length % 2 === 0 && !mapLoading) {
                 setDoneModal(true);
               } else {
@@ -153,7 +154,6 @@ function MapScreen({ navigation }) {
         },
       });
 
-      setMapLoading(true);
       setOffScan(false);
       await fetchGasStation();
 
@@ -164,18 +164,13 @@ function MapScreen({ navigation }) {
       if (tripRes.length >= 0) {
         const pointObj = JSON.parse(tripRes[tripRes.length - 1].points);
         pointObj.map(async (item) => {
-          if (
-            pointObj[0].latitude.toFixed(4) == item.latitude.toFixed(4) ||
-            pointObj[0].longitude.toFixed(4) == item.longitude.toFixed(4)
-          ) {
-            return null;
-          }
           await insertToTable("INSERT INTO route (points) values (?)", [
             JSON.stringify(item),
           ]);
         });
 
         await reloadRoute();
+        setHaveRoute(true);
       }
 
       const locPoint = JSON.parse(tripRes[tripRes.length - 1].locations);
@@ -184,9 +179,10 @@ function MapScreen({ navigation }) {
       } else {
         await reloadMapState();
       }
-      setMapLoading(false);
+
       // END
     })();
+    setMapLoading(false);
   }, []);
 
   useEffect(() => {
@@ -221,33 +217,36 @@ function MapScreen({ navigation }) {
   }, [trip]);
 
   useEffect(() => {
-    (async () => {
-      if (currentLocation && currentLocation.speed >= 1.4 && !mapLoading) {
-        setPoints((currentValue) => [
-          ...currentValue,
-          {
-            latitude: currentLocation.latitude,
-            longitude: currentLocation.longitude,
-          },
-        ]);
+    // && !mapLoading
+    if (!mapLoading && haveRoute) {
+      (async () => {
+        if (currentLocation && currentLocation.speed >= 1.4) {
+          setPoints((currentValue) => [
+            ...currentValue,
+            {
+              latitude: currentLocation.latitude,
+              longitude: currentLocation.longitude,
+            },
+          ]);
 
-        insertToTable("INSERT INTO route (points) values (?)", [
-          JSON.stringify({
-            latitude: currentLocation.latitude,
-            longitude: currentLocation.longitude,
-          }),
-        ]);
-      }
-      if (points.length == 0 || trip == undefined) {
-        await reloadRoute();
-        await reloadMapState();
-        await reloadGas();
-      }
+          insertToTable("INSERT INTO route (points) values (?)", [
+            JSON.stringify({
+              latitude: currentLocation.latitude,
+              longitude: currentLocation.longitude,
+            }),
+          ]);
+        }
+        if (points.length == 0 || trip == undefined) {
+          await reloadRoute();
+          await reloadMapState();
+          await reloadGas();
+        }
 
-      const meter = getPathLength(points);
-      const km = meter / 1000;
-      setTotalKm(km.toFixed(1));
-    })();
+        const meter = getPathLength(points);
+        const km = meter / 1000;
+        setTotalKm(km.toFixed(1));
+      })();
+    }
   }, [currentLocation]);
 
   // 900000 = 15 minutes
@@ -628,7 +627,7 @@ function MapScreen({ navigation }) {
                 }:${
                   seconds < 10 ? `0${seconds}` : seconds >= 10 && seconds
                 }`}</AppText>
-                <AppText>{`  Total KM: ${totalKm}`}</AppText>
+                <AppText>{`  Total KM: ${totalKm || "0"}`}</AppText>
               </View>
 
               <View style={styles.buttonWrapper}>
