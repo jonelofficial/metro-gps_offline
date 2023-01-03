@@ -48,7 +48,7 @@ function ScanScreen() {
   /*
    * Valid JSON for login
    * {
-   *   "identifier": "",
+   *   "username": "",
    *   "password": ""
    * }
    *
@@ -143,7 +143,7 @@ function ScanScreen() {
         alert("Please login first");
         setScanned(true);
         // VALID LOGIN QR CODE BUT ALREADY LOGIN
-      } else if (json.identifier && user) {
+      } else if (json.username && user) {
         alert("Already login");
         setScanned(true);
         // NOT VALID QR CODE

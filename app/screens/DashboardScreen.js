@@ -172,6 +172,38 @@ function DashboardScreen({ navigation }) {
     setModalVisible(!isModalVisible);
   };
 
+  //
+
+  const handleNotSyncNotif = () => {
+    if (noInternet) {
+      const content = {
+        title: `Fresh Morning ${
+          user.first_name[0].toUpperCase() +
+          user.first_name.substring(1).toLowerCase()
+        } `,
+        body: "You have an unsynced trip. Please sync it as soon as you have access to the Internet.",
+      };
+
+      Notifications.scheduleNotificationAsync({
+        content,
+        trigger: null,
+      });
+    } else {
+      const content = {
+        title: `Fresh Morning ${
+          user.first_name[0].toUpperCase() +
+          user.first_name.substring(1).toLowerCase()
+        } `,
+        body: "You already have access to the internet. Please sync the unsynced trip.",
+      };
+
+      Notifications.scheduleNotificationAsync({
+        content,
+        trigger: null,
+      });
+    }
+  };
+
   const handleRefresh = async () => {
     try {
       setOffScan(false);
@@ -186,8 +218,9 @@ function DashboardScreen({ navigation }) {
       let totalItems = 0;
       const res = await selectTable("offline_trip");
 
-      if (res.length >= 0) {
+      if (res.length > 0) {
         setOffline(true);
+        handleNotSyncNotif();
         await res.reverse().map((item) => {
           setTrips((prevState) => [
             ...prevState,
@@ -333,7 +366,7 @@ function DashboardScreen({ navigation }) {
       <Screen>
         <Card
           image={image && { uri: image }}
-          name={`${user.first_name} ${user.last_name}`}
+          name={`${user.first_name.split(" ")[0]} ${user.last_name}`}
           onPress={
             loading
               ? () => alert("Please wait the loading to be done.")
